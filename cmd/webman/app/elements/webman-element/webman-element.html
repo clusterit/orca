@@ -1,0 +1,97 @@
+<link rel="import" href="../elements.html">
+<link rel="import" href="webman-zone.html">
+
+<polymer-element name="webman-element" attributes="user" layout vertical>
+  <template>
+    <link rel="stylesheet" href="webman-element.css">
+
+    <paper-tabs selected="{{configtab}}" id="configtabs" on-core-activate="{{tabSelected}}">
+      <template repeat="{{s in zones}}">
+        <paper-tab>[{{s}}]</paper-tab>
+      </template>
+    </paper-tabs>
+    <core-pages selected="{{configtab}}" flex >
+      <template repeat="{{s,index in zones}}">
+        <webman-zone flex id="config_{{index}}"></webman-zone>
+      </template>
+    </core-pages>
+
+    <core-ajax
+      id="zonesloader"
+      method="GET"
+      url="/configuration/zones"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{showError}}"
+      on-core-response="{{zonesLoaded}}"></core-ajax>
+    <core-ajax
+      id="mcsaver"
+      method="PUT"
+      url="/configuration/{{zone}}/mgrConfig"
+      headers='{"Authorization":"{{user.token}}"}'
+      contentType="application/json"
+      handleAs="json"
+      on-core-error="{{showError}}"
+      on-core-response="{{mcSaved}}"></core-ajax>
+    <core-ajax
+      id="mcloader"
+      method="GET"
+      url="/configuration/{{zone}}/mgrConfig"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-error="{{showError}}"
+      on-core-response="{{mcLoaded}}"></core-ajax>
+  </template>
+  <script>
+    Polymer({
+      configtab: 0,
+      zone : "",
+      zones : [],
+
+      ready : function () {
+      },
+      showError : function (rsp, det) {
+        this.fire("error",det.response.response.error)
+      },
+      clicked : function () {
+        this.$.zonesloader.go();
+        this.$.configtabs.updateBar();
+      },
+      getTab : function () {
+        return this.shadowRoot.querySelector("#config_"+(this.configtab));
+      },
+      doSave : function () {
+        var t = this.getTab();
+        var k = {
+          key : t.jwtkey,
+          authUrl : t.authurl,
+          verifyCert : t.verifycert
+        };
+        this.$.mcsaver.xhrArgs = {
+          body : JSON.stringify(k)
+        };
+        this.$.mcsaver.go();
+      },
+      zonesLoaded : function (rsp, det) {
+        this.zones = det.response;
+        this.zone = this.zones[this.configtab];
+        this.$.mcloader.go();
+      },
+      mcSaved : function (rsp, det) {
+        console.log("gateway saved:" , rsp, det);
+      },
+      mcLoaded : function (rsp, det) {
+        var dat = det.response;
+        var t = this.getTab();
+        t.authurl = dat.authUrl;
+        t.verifycert = dat.verifyCert;
+        t.updateText(dat.key);
+      },
+      tabSelected : function (evt, det) {
+        this.zone = this.zones[this.configtab];
+        this.$.mcloader.go();
+      }
+    });
+  </script>
+</polymer-element>

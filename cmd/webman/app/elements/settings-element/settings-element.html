@@ -1,0 +1,59 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="settings-element" attributes="user details">
+  <template>
+    <link rel="stylesheet" href="settings-element.css">
+    <div layout vertical>
+      <div layout horizontal><b id="username">{{user.uid}}</b></div>
+      <template if="{{details.allowance}}">
+        <div id="allowedlabel">You are allowed to login via SSH until <b>{{details.allowance.until | formatTime}}</b></div>
+      </template>
+      <template if="{{!details.allowance}}">
+        <div id="allowedlabel">You are not allowed to login, please activate your account.</div>
+      </template>
+      <div id="loginlabel">Allow Login for the next ...</div>
+      <div layout horiztontal center-justified>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="12">12 h</paper-button>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="24">24 h</paper-button>
+      </div>
+    </div>
+    <core-ajax
+      id="allowance"
+      method="PATCH"
+      url="/users/{{user.uid}}/permit/{{duration}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-response="{{userAllowed}}"></core-ajax>
+    
+  </template>
+  <script>
+    Polymer({
+      duration : 0,
+      allowedtime : "",
+      user : null,
+      
+      ready : function () {
+        if (this.user && this.user.allowance) {
+          this.allowedtime = this.user.allowance.until;
+        }
+      },
+      formatTime : function (t) {
+        if (!t) return "";
+        var d = new Date(t);
+        return d.toLocaleString();
+      },
+      allow : function (el) {
+        this.duration = parseInt(el.srcElement.dataset.value, 10) * 3600;
+        this.$.allowance.go();
+        //console.log(el.srcElement.dataset.value);
+      },
+      userAllowed : function (rsp, det) {
+        this.fire("allowed")
+        console.log("allowed: ",det);
+      }
+    });
+  </script>
+</polymer-element>

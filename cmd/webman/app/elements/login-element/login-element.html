@@ -1,0 +1,58 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="login-element" attributes="config">
+  <template>
+    <link rel="stylesheet" href="login-element.css">
+    <paper-shadow id="logins" z="2" >
+      <div horizontal center-justified layout>
+        <paper-icon-button on-tap="{{doLoginGoogle}}" class="red" icon="google:google" title="red icon"></paper-icon-button>
+      </div>
+    </paper-shadow>
+    <core-ajax
+      id="serverAuth"
+      method="POST"
+      url="/auth/"
+      params='{"network":"{{network}}", "access_token":"{{access_token}}"}'
+      handleAs="json"
+      on-core-response="{{storeToken}}"></core-ajax>
+
+  </template>
+
+  <script src="../../bower_components/hello/dist/hello.all.min.js"></script>
+  <script>
+    Polymer({
+      config: null,
+      network:"",
+      access_token : "",
+
+      ready : function () {
+      },
+      storeToken : function (r,det) {
+        var data = det.response;
+        data.token = det.xhr.getResponseHeader("Authorization");
+        //console.log("storetoken:",data);
+        this.fire("login", {data:data});
+      },
+      login : function() {
+        var self = this;
+        hello.init(this.config.oauth, {
+            redirect_uri:"redirect.html",
+            force: false,
+            scope: "email"
+          }
+        );
+        hello.on('auth.login', function(auth){
+          self.network = auth.network;
+          self.access_token = auth.authResponse.access_token;
+          self.$.serverAuth.go();
+        });
+      },
+      logout : function () {
+        hello(this.network).logout();
+      },
+      doLoginGoogle: function() {
+        hello( 'google' ).login()
+      }
+    });
+  </script>
+</polymer-element>

@@ -1,0 +1,79 @@
+#keys {
+  display: inline-block;
+  background: white;
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 5px;
+  overflow:auto;
+  border-radius: 2px;
+  height: 100%;
+}
+
+.keyelement {
+  display:inline-block;
+  padding: 3px;
+  xpadding-top: 5px;
+  border-bottom: 1px solid #ddd;
+  line-height: 1.5em;
+}
+
+core-list .keyelement {
+  height: 3em;
+}
+.keyactions {
+  display:inline-block;
+  width: 10em;
+}
+
+.keyaction {
+  height: 1.1em;
+  float:right;
+}
+
+.keyaction:hover {
+  border-bottom: 1px solid #ddd;
+  border-radius: 50%;
+}
+
+.keyelement:hover .keyactions {
+  position:relative;
+  display:inline-block;
+}
+
+.description {
+  color: #888;
+  width: 10em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.fingerprint {
+  color: #888;
+  width: 30em;
+  font-weight: bold;
+  font-family: monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  display:inline-block;
+}
+
+.keyvalue {
+  font-weight: bold;
+  font-family: monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  display:inline-block;
+}
+
+.value {
+  font-weight: bold;
+}
+
+#addkey {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}
+

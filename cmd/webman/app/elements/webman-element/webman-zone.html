@@ -1,0 +1,54 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="webman-zone" layout vertical attributes="jwtkey authurl verifycert">
+  <template>
+    <link rel="stylesheet" href="webman-element.css">
+
+    <div class="settingscard" fit>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Verify Auth-Server Cert</div>
+          <div class="labelhelp">If you are using Basic-Auth for CLIman, you can disable the certificate verification if you are using selfsigned certs.</div>
+        </div>
+        <paper-toggle-button class="widget" checked="{{verifycert}}"></paper-toggle-button>
+      </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Authentication URL</div>
+          <div class="labelhelp">Use this URL for the CLIman to authenticate the user.</div>
+        </div>
+      </div>
+      <div flex class="authurl">
+        <paper-input style="width:100%" label="Authentcation URL" value="{{authurl}}"></paper-input>
+      </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">JWT Key</div>
+          <div class="labelhelp">Copy&Paste your RSA key to be used for your JWT token in WebMan.</div>
+        </div>
+      </div>
+      <div flex class="jwtkey">
+        <paper-autogrow-textarea id="pjwtkey" style="width:100%" flex>
+          <textarea  placeholder="Paste your JWT key" id="tjwtkey" value="{{jwtkey}}"></textarea>
+        </paper-autogrow-textarea>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      jwtkey : "",
+      authurl : "",
+      loglevel:"",
+      verifycert : true,
+
+      ready : function () {
+      },
+      updateText : function (val) {
+        this.$.tjwtkey.value = val;
+        this.jwtkey = val;
+        this.$.pjwtkey.update(this.$.tjwtkey);
+      }
+    });
+  </script>
+</polymer-element>

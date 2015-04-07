@@ -1,0 +1,199 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="users-element" attributes="user zone">
+  <template>
+    <link rel="stylesheet" href="users-element.css" shim-shadow>
+    <style >
+      .red {
+        background: red;
+      }
+      .green {
+        background: green;
+      }
+      .blue {
+        background: blue;
+      }
+      .yellow {
+        background: yellow;
+      }
+      .magenta {
+        background: magenta;
+      }
+      .aqua {
+        background: aqua;
+      }
+
+    </style>
+    <div id="users" fit >
+      <core-list data="{{users}}" fit>
+        <template>
+          <div layout horizontal center class="userline">
+            <div class="{{initialClass(model)}}"><div class="initialKey" >{{model.name | toUpperCaseChar}}</div></div>
+            <div layout vertical flex on-tap="{{editUser}}">
+              <div class="userid">{{model.id}}</div>
+              <div class="username">{{model.name}}</div>
+            </div>
+            <template if="{{isManager(model)}}">
+              <core-icon icon="star" style="color:#FDD835"></core-icon>
+            </template>
+            <template if="{{!isManager(model)}}">
+              <core-icon icon="star-outline" style="color:#FDD835"></core-icon>
+            </template>
+             <div style="padding:5px"><paper-fab mini icon="clear" on-tap="{{showDeleteUser}}"></paper-fab></div>
+          </div>
+        </template>
+      </core-list>
+
+      <paper-fab id="adduser" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
+
+      <paper-dialog backdrop id="adduserdialog" heading="Add/Update User" >
+        <div><paper-input label="User ID" id="uid"></paper-input></div>
+        <div><paper-input label="User name" id="name"></paper-input></div>
+        <div layout horizontal center >
+          <div >Manager</div>
+          <paper-toggle-button id="cbmanager" style="padding:10px"></paper-toggle-button>
+        </div>
+        <div horizontal layout end-justified><paper-button affirmative autofocus on-tap="{{addUserToOrca}}">Add</paper-button></div>
+      </paper-dialog>
+      <paper-action-dialog backdrop id="deleteuserdlg" heading="Delete">
+        <p>Delete the User '{{removeuser}}' ?</p>
+        <paper-button affirmative on-tap="{{deleteUser}}">Yes</paper-button>
+        <paper-button affirmative autofocus>No</paper-button>
+      </paper-action-dialog>
+    </div>
+    <core-ajax
+      id="usersloader"
+      method="GET"
+      url="/users"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{usersNotLoaded}}"
+      on-core-response="{{usersLoaded}}"></core-ajax>
+    <core-ajax
+      id="userscreator"
+      method="PUT"
+      url="/users"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-error="{{userNotCreated}}"
+      on-core-response="{{userCreated}}"></core-ajax>
+    <core-ajax
+      id="usersdeleter"
+      method="DELETE"
+      url="/users/{{removeuser}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-error="{{userNotDeleted}}"
+      on-core-response="{{userDeleted}}"></core-ajax>
+
+  </template>
+  <script>
+    Polymer({
+      users : [],
+      colors : ["red","green","blue","yellow","magenta","aqua"],
+      removeuser : "",
+
+      ready : function () {
+
+      },
+      isManager : function (u) {
+        if (!u) return false;
+        for (var i=0; i<u.roles.length; i++) {
+          if (u.roles[i] == "MANAGER")
+            return true;
+        }
+        return false;
+      },
+      hash : function (s) {
+        var h = s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+        if (h<0) return -1 * h;
+        return h;
+      },
+      initialClass : function (v) {
+        if (!v) return "initial red";
+        var n = v.name? this.hash(v.name) : this.hash(v.id);
+        var idx = n % this.colors.length;
+        return "initial "+this.colors[idx];
+      },
+      toUpperCaseChar: function(value) {
+        if (!value) return "";
+        return value[0].toUpperCase();
+      },
+      showAddDialog : function () {
+        this.$.uid.value = "";
+        this.$.name.value = "";
+        this.$.cbmanager.checked = false;
+        this.$.adduserdialog.toggle();
+      },
+      addUserToOrca : function () {
+        var roles = ["USER"];
+        if (this.$.cbmanager.checked)
+          roles.push("MANAGER");
+        var usr = {
+          id: this.$.uid.value,
+          name: this.$.name.value,
+          keys : [],
+          roles : roles
+        };
+        this.$.userscreator.xhrArgs = {
+          body : JSON.stringify(usr)
+        };
+        this.$.userscreator.go();
+      },
+      usersLoaded : function (rsp, det) {
+        this.users = det.response;
+      },
+      usersNotLoaded : function (rsp, det) {
+        this.showError("The users cannot be loaded: "+det.response.response.error);
+      },
+      userCreated : function (rsp, det) {
+        console.log(this.users);
+        this.$.adduserdialog.toggle();
+        this.$.usersloader.go();
+      },
+      userNotCreated : function (rsp, det) {
+        console.log(this.users);
+        this.showError("The user cannot be created: "+det.response.response.error);
+      },
+      userDeleted : function (rsp, det) {
+        console.log(this.users);
+        this.$.usersloader.go();
+      },
+      userNotDeleted : function (rsp, det) {
+        console.log(this.users);
+        this.showError("The user cannot be deleted: "+det.response.response.error);
+      },
+      clicked : function () {
+        this.$.usersloader.go();
+      },
+      showDeleteUser : function (evt) {
+        var e = evt.target.templateInstance.model.model;
+        this.removeuser = e.id;
+        this.$.deleteuserdlg.toggle();
+      },
+      deleteUser : function () {
+        this.$.usersdeleter.go();
+      },
+      showError : function (msg) {
+        this.fire("error", msg);
+      },
+      editUser : function (evt) {
+        var e = evt.target.templateInstance.model.model;
+        this.$.uid.value = e.id;
+        this.$.name.value = e.name;
+        var isman = false;
+        for (var i=0; i<e.roles.length; i++) {
+          if (e.roles[i] == "MANAGER") {
+            isman = true;
+            break;
+          }
+        }
+        this.$.cbmanager.checked = isman
+        this.$.adduserdialog.toggle();
+      },
+
+    });
+  </script>
+</polymer-element>

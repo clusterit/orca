@@ -1,0 +1,18 @@
+.apptitle {
+  xbackground-color: white;
+}
+
+.profile {
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin-top: 5px;
+}
+
+.menuicon {
+  margin-right: 0.5em;
+}
+
+paper-tabs {
+  background-color: #00bcd4;
+}

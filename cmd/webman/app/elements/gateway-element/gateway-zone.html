@@ -1,0 +1,60 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="gateway-zone" layout vertical attributes="loglevel hostkey forcecheck">
+  <template>
+    <link rel="stylesheet" href="gateway-element.css">
+
+    <div class="settingscard" fit>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Time based login</div>
+          <div class="labelhelp">Should the gateway check if the user is currently allowed to login. If not, the user is always allowed to login if a public key is available.</div>
+        </div>
+        <paper-toggle-button class="widget" checked="{{forcecheck}}"></paper-toggle-button>
+      </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Loglevel</div>
+          <div class="labelhelp">Specify at which level the logging should be done. Trace is the most, Error is the least.</div>
+        </div>
+        <paper-dropdown-menu label="LogLevel"  class="widget">
+          <paper-dropdown class="dropdown">
+            <core-menu valueattr="val" class="menu" selected="{{loglevel}}">
+              <paper-item val="TRACE">Trace</paper-item>
+              <paper-item val="DEBUG">Debug</paper-item>
+              <paper-item val="INFO">Info</paper-item>
+              <paper-item val="WARN">Warn</paper-item>
+              <paper-item val="ERROR">Error</paper-item>
+            </core-menu>
+          </paper-dropdown>
+        </paper-dropdown-menu>
+      </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Hostkey</div>
+          <div class="labelhelp">Copy&Paste your key to be used for the SSH server gateway.</div>
+        </div>
+      </div>
+      <div flex class="hostkey">
+        <paper-autogrow-textarea id="phostkey" style="width:100%" flex>
+          <textarea  placeholder="Paste your host key for the SSH gateway" id="thostkey" value="{{hostkey}}"></textarea>
+        </paper-autogrow-textarea>
+      </div>
+    </div>
+
+  </template>
+  <script>
+    Polymer({
+      hostkey : "",
+      loglevel:"",
+
+      ready : function () {
+      },
+      updateText : function (val) {
+        this.$.thostkey.value = val;
+        this.hostkey = val;
+        this.$.phostkey.update(this.$.thostkey);
+      }
+    });
+  </script>
+</polymer-element>

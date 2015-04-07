@@ -1,0 +1,178 @@
+<link rel="import" href="../elements.html">
+<link rel="import" href="../login-element/login-element.html">
+<link rel="import" href="../settings-element/settings-element.html">
+<link rel="import" href="../keys-element/keys-element.html">
+<link rel="import" href="../users-element/users-element.html">
+<link rel="import" href="../gateway-element/gateway-element.html">
+<link rel="import" href="../webman-element/webman-element.html">
+
+<polymer-element name="webman-app" flex layout vertical attributes="configURL">
+  <template>
+    <link rel="stylesheet" href="webman-app.css">
+    <core-pages valueattr="id" selected="{{page}}" flex>
+      <div horizontal layout flex id="loginpage">
+        <div flex self-center>
+          <div horizontal center-justified layout>
+            <div><login-element id="login" on-login="{{handleLoggedIn}}" config="{{config}}"></login-element></div>
+          </div>
+        </div>
+      </div>
+      <core-scaffold id="mainpage" hidden?="{{!userdetails}}">
+        <core-header-panel navigation flex mode="seamed">
+          <core-toolbar style="background-image: url({{user.backgroundurl}});">
+            WebMan <small>[{{zone}}]</small>
+            <div flex></div>
+            <core-image class="profile" src="{{ user.thumbnail }}"></core-image>
+          </core-toolbar>
+          <core-menu theme="core-light-theme" selected="{{appPage}}" >
+            <!-- the next bind is only for a update-trigger if userdetails changes -->
+            <template bind="{{userdetails as ud}}">
+              <template repeat="{{menuItems | allowed}}">
+                <paper-item target="{{target}}" on-tap="{{closeDrawer}}">
+                  <core-icon class="menuicon" icon="{{icon}}"></core-icon>
+                  {{label}}
+                </paper-item>
+              </template>
+            </template>
+          </core-menu>
+        </core-header-panel>
+        <div tool flex><div layout horizontal center>
+          <div flex>{{menuItems[appPage].label}}</div>
+          <div>
+            <template if="{{menuItems[appPage].saveable}}">
+              <core-icon-button icon="save" on-tap="{{doSave}}"></core-icon-button>
+            </template>
+          </div>
+        </div></div>
+        <div fit>
+          <core-pages fit valueattr="id" selected="{{menuItems[appPage].target}}">
+            <div id="settingspage" layout vertical fit>
+              <paper-tabs selected="{{datatab}}" id="settingstabs">
+                <paper-tab>Account</paper-tab>
+                <paper-tab>Keys</paper-tab>
+              </paper-tabs>
+              <core-pages selected="{{datatab}}" flex on-core-select="{{datatabSelected}}">
+                <settings-element on-error="{{displayError}}" user="{{user}}" details="{{userdetails}}" on-allowed="{{userRefresh}}"></settings-element>
+                <keys-element zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
+              </core-pages>
+            </div>
+            <div id="users" fit>
+              <users-element fit user="{{user}}" on-error="{{displayError}}" zone="{{zone}}"></users-element>
+            </div>
+            <div id="gateway" fit>
+              <gateway-element fit user="{{user}}" on-error="{{displayError}}"></gateway-element>
+            </div>
+            <div id="webman" fit>
+              <webman-element fit user="{{user}}" on-error="{{displayError}}"></webman-element>
+            </div>
+          </core-pages>
+        </div>
+      </core-scaffold>
+
+      <div>
+        {{menuItems[appPage].label}}
+      </div>
+    </core-pages>
+    <paper-toast id="errormsg"></paper-toast>
+    <core-ajax
+      auto
+      url="{{configURL}}"
+      handleAs="json"
+      on-core-response="{{handleConfigResponse}}"></core-ajax>
+    <core-ajax
+      id="userloader"
+      method="GET"
+      url="/users/{{user.uid}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{userNotLoadable}}"
+      on-core-response="{{userLoaded}}"></core-ajax>
+    <core-ajax
+      id="stageloader"
+      method="GET"
+      auto
+      url="/configuration/zone"
+      handleAs="json"
+      response="{{zone}}"></core-ajax>
+  </template>
+  <script>
+    Polymer({
+      page : "loginpage",
+      username : "",
+      userdetails : null,
+      token : null,
+      appPage : 0,
+      user : null,
+      config : null,
+      datatab : 0,
+      zone : "",
+
+      menuItems : [
+        {target:"settingspage",icon:"social:person",label:"Me", role:"USER"},
+        {target:"users",icon:"social:people",label:"Users", role:"MANAGER"},
+        {target:"gateway",icon:"settings-input-component",label:"Gateway", role:"MANAGER",saveable:true},
+        {target:"webman",icon:"cloud-queue",label:"Manager Config", role:"MANAGER",saveable:true}
+      ],
+      allowed : function (items) {
+        if (!this.userdetails) return false;
+        var ud = this.userdetails;
+        return items.filter (function (item) {
+          return ud.roles.indexOf(item.role)!=-1;
+        });
+      },
+      datatabSelected : function (ev, det) {
+        if (det.isSelected) {
+          if (this.userdetails)
+            this.userRefresh();
+          if (det.clicked)
+            det.clicked()
+        }
+      },
+      userLoaded : function (rsp, detail) {
+        this.userdetails = detail.response;
+        this.page = "mainpage";
+        this.$.settingstabs.updateBar();
+        //this.appPage = 0;
+      },
+      userNotLoadable : function (rsp, detail) {
+        this.showError("Userdata cannot be loaded: "+detail.response.response.error);
+        this.$.login.logout();
+      },
+      doSave : function () {
+        var pgname = this.menuItems[this.appPage].target;
+        var pg = this.shadowRoot.querySelector("#"+pgname);
+        pg.children[0].doSave();
+      },
+      closeDrawer : function (evt) {
+        var e = evt.target.templateInstance.model;
+        var cn = this.$[e.target].children[0];
+        if (cn.clicked)
+          cn.clicked();
+        this.$.mainpage.closeDrawer();
+      },
+      handleConfigResponse : function (e,d) {
+        this.config = d.response;
+        this.$.login.login();
+      },
+
+      handleLoggedIn: function(evt,u) {
+        console.log("login:",u);
+        this.user = u.data;
+        this.username = u.data.name;
+        this.token = u.data.token;
+        this.$.userloader.go();
+      },
+      userRefresh : function () {
+        this.$.userloader.go();
+      },
+      displayError : function (ev, det) {
+        this.showError(det);
+      },
+      showError : function (msg) {
+        this.$.errormsg.text = msg;
+        this.$.errormsg.show();
+      }
+    });
+  </script>
+
+</polymer-element>
