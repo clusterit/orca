@@ -20,6 +20,7 @@ orcacli:
 	go build -o $(OUTROOT)/orcacli -ldflags "-X main.revision $(SHA)" github.com/clusterit/orca/cmd/cli
 
 embed:
+	cd cmd/webman && bower install
 	rice --import-path="github.com/clusterit/orca/cmd/webman" append --exec="$(OUTROOT)/webman"
 
 
