@@ -29,7 +29,7 @@ var (
 	configer      config.Configer
 	zone          string
 	lock          sync.Mutex
-	revision      string
+	revision      = "latest"
 )
 
 func init() {
@@ -74,6 +74,7 @@ func initWithConfig(gw *config.Gateway) error {
 
 	sshConfig = ssh.ServerConfig{
 		PublicKeyCallback: keyAuth,
+		ServerVersion:     fmt.Sprintf("SSH-2.0-orca_%s", revision),
 	}
 	sshConfig.AddHostKey(signer)
 	configuration = gw
