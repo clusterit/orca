@@ -19,10 +19,10 @@ climan:
 orcacli:
 	go build -o $(OUTROOT)/orcacli -ldflags "-X main.revision $(SHA)" github.com/clusterit/orca/cmd/cli
 
+# to embed the resources we need bower and rice in the path
 embed:
 	cd cmd/webman && bower install
 	rice --import-path="github.com/clusterit/orca/cmd/webman" append --exec="$(OUTROOT)/webman"
-
 
 depends:
 	go get github.com/GeertJohan/go.rice/rice
