@@ -1,4 +1,4 @@
-![Orca](orca.png)
+![Orca](doc/img/orca_sm.png)
 
 # Orca!
 Hi! `orca`is a SSH gateway comparable to a reverse HTTP proxy. You 
