@@ -254,8 +254,12 @@ func (cs *clientSession) connectToBackend(backend string, user string, ag agent.
 
 func (cs *clientSession) connectRemote(backend string, channel ssh.Channel, cmd *string) {
 	defer cs.serverConn.Close()
-	sess := cs.backend.session
+	if cs.backend == nil {
+		cs.errorf("you must enable agent forwarding")
+		return
+	}
 	defer cs.backend.close()
+	sess := cs.backend.session
 
 	cs.forwardBufferedRequest()
 	stdoutP, e := sess.StdoutPipe()

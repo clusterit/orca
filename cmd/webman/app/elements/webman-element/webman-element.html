@@ -19,7 +19,7 @@
     <core-ajax
       id="zonesloader"
       method="GET"
-      url="/configuration/zones"
+      url="/api/configuration/zones"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{showError}}"
@@ -27,7 +27,7 @@
     <core-ajax
       id="mcsaver"
       method="PUT"
-      url="/configuration/{{zone}}/mgrConfig"
+      url="/api/configuration/{{zone}}/mgrConfig"
       headers='{"Authorization":"{{user.token}}"}'
       contentType="application/json"
       handleAs="json"
@@ -36,7 +36,7 @@
     <core-ajax
       id="mcloader"
       method="GET"
-      url="/configuration/{{zone}}/mgrConfig"
+      url="/api/configuration/{{zone}}/mgrConfig"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"

@@ -15,6 +15,14 @@ type UsersService struct {
 	Provider Users
 }
 
+type CheckedUser func(f UserFunction) restful.RouteFunction
+
+func CheckUser(a auth.Auther, u Users, rlz Roles) CheckedUser {
+	return func(f UserFunction) restful.RouteFunction {
+		return HasRoles(f, a, u, rlz)
+	}
+}
+
 func roles(sroles []string) Roles {
 	var r Roles
 	for _, s := range sroles {
@@ -32,48 +40,43 @@ func (t *UsersService) Shutdown() error {
 	return t.Provider.Close()
 }
 
-func (t *UsersService) af(f auth.AuthedFunction) restful.RouteFunction {
-	return auth.Authed(f, t.Auth)
-}
+func (t *UsersService) Register(root string, c *restful.Container) {
+	manager := CheckUser(t.Auth, t.Provider, ManagerRoles)
+	userRoles := CheckUser(t.Auth, t.Provider, UserRoles)
 
-func (t *UsersService) uf(f UserFunction, rlz Roles) restful.RouteFunction {
-	return HasRoles(f, t.Auth, t.Provider, rlz)
-}
-
-func (t *UsersService) Register(c *restful.Container) {
 	ws := new(restful.WebService)
 	ws.
-		Path("/users").
+		Path(root + "/users").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
-	ws.Route(ws.PUT("").To(t.uf(t.createUser, ManagerRoles)).
+	ws.Route(ws.PUT("").To(manager(t.createUser)).
 		Doc("create a user").
 		Operation("createUser").
 		Reads(User{}).
 		Writes(User{}))
-	ws.Route(ws.GET("/").To(t.uf(t.getAll, ManagerRoles)).
+	ws.Route(ws.GET("/").To(manager(t.getAll)).
 		Doc("get all registered users").
 		Operation("getAll").
 		Returns(200, "OK", []User{}))
-	ws.Route(ws.GET("/{user-id}").To(t.uf(t.getUser, UserRoles)).
+	ws.Route(ws.GET("/{user-id}").To(userRoles(t.getUser)).
 		Doc("retrieves the given user").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Operation("getUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.DELETE("/{user-id}").To(t.uf(t.deleteUser, UserRoles)).
+	ws.Route(ws.DELETE("/{user-id}").To(userRoles(t.deleteUser)).
 		Doc("deletes the given user").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Operation("deleteUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/{user-id}").To(t.uf(t.updateUser, UserRoles)).
+	ws.Route(ws.PATCH("/{user-id}").To(userRoles(t.updateUser)).
 		Doc("updates the given user's name").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.QueryParameter("name", "new name of the user").DataType("string")).
 		Param(ws.QueryParameter("role", "a role of the user").DataType("string").AllowMultiple(true)).
 		Operation("updateUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/{user-id}/permit/{duration}").To(t.uf(t.permitUser, ManagerRoles)).
+	ws.Route(ws.PATCH("/{user-id}/permit/{duration}").To(manager(t.permitUser)).
 		Doc("permits the user to login the next 'duration' seconds").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.QueryParameter("duration", "time in seconds to allow logins").DataType("string")).
@@ -85,7 +88,7 @@ func (t *UsersService) Register(c *restful.Container) {
 		Operation("getUserByKey").
 		Reads("").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PUT("/{user-id}/{key-id}/{zone}/pubkey").To(t.uf(t.addUserKey, UserRoles)).
+	ws.Route(ws.PUT("/{user-id}/{key-id}/{zone}/pubkey").To(userRoles(t.addUserKey)).
 		Doc("add the given key to the users list of public keys").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
@@ -93,14 +96,14 @@ func (t *UsersService) Register(c *restful.Container) {
 		Operation("addUserKey").
 		Reads("").
 		Returns(200, "OK", Key{}))
-	ws.Route(ws.DELETE("/{user-id}/{key-id}/{zone}/pubkey").To(t.uf(t.deleteUserKey, UserRoles)).
+	ws.Route(ws.DELETE("/{user-id}/{key-id}/{zone}/pubkey").To(userRoles(t.deleteUserKey)).
 		Doc("delete the given key to the users list of public keys").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
 		Param(ws.PathParameter("zone", "the zone where to search the user in").DataType("string")).
 		Operation("deleteUserKey").
 		Returns(200, "OK", Key{}))
-	ws.Route(ws.POST("/parsekey").To(t.uf(t.parseKey, UserRoles)).
+	ws.Route(ws.POST("/parsekey").To(userRoles(t.parseKey)).
 		Doc("retrieves the user with the embedded public key").
 		Operation("parseKey").
 		Reads("").

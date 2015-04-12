@@ -56,10 +56,10 @@ func (t *AutherService) Shutdown() error {
 }
 
 // Rest interface description
-func (t *AutherService) Register(c *restful.Container) {
+func (t *AutherService) Register(root string, c *restful.Container) {
 	ws := new(restful.WebService)
 	ws.
-		Path("/auth").
+		Path(root + "/auth").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 

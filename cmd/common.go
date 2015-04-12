@@ -18,7 +18,7 @@ var (
 	logger = logging.Simple()
 )
 
-func PublishAddress(pub, listen string) string {
+func PublishAddress(pub, listen, path string) string {
 	if pub == "self" {
 		addr := strings.Split(listen, ":")
 		if addr[0] != "" {
@@ -27,7 +27,7 @@ func PublishAddress(pub, listen string) string {
 			pub = "http://localhost:" + addr[1]
 		}
 	}
-	return pub
+	return pub + path
 }
 
 func ForceZone(cfger config.Configer, zone string, createGateway, createMc bool) (*config.Gateway, *config.ManagerConfig, error) {

@@ -19,7 +19,7 @@
     <core-ajax
       id="zonesloader"
       method="GET"
-      url="/configuration/zones"
+      url="/api/configuration/zones"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{showError}}"
@@ -27,7 +27,7 @@
     <core-ajax
       id="gatewaysaver"
       method="PUT"
-      url="/configuration/{{zone}}/gateway"
+      url="/api/configuration/{{zone}}/gateway"
       headers='{"Authorization":"{{user.token}}"}'
       contentType="application/json"
       handleAs="json"
@@ -36,7 +36,7 @@
     <core-ajax
       id="gatewayloader"
       method="GET"
-      url="/configuration/{{zone}}/gateway"
+      url="/api/configuration/{{zone}}/gateway"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"

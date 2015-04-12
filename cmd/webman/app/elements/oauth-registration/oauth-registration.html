@@ -1,0 +1,125 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="oauth-registration" attributes="user details">
+  <template>
+    <link rel="stylesheet" href="oauth-registration.css">
+
+    <div id="networks" fit >
+      <core-list data="{{networks}}" fit>
+        <template>
+          <div horizontal layout center class="networkelement">
+            <div class="network">{{model.network}}</div>
+            <div class="clientid">{{model.clientid}}</div>
+            <div class="actions">
+              <paper-icon-button icon="editor:mode-edit" on-tap="{{editElement}}"></paper-icon-button>
+              <paper-icon-button icon="clear" on-tap="{{showDeleteNetwork}}"></paper-icon-button>
+            </div>
+          </div>
+        </template>
+      </core-list>
+    </div>
+    
+    <paper-fab id="addreg" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
+
+    <paper-dialog backdrop id="addregdialog" heading="Add/Update Provider" >
+      <div><paper-input label="Network" id="network"></paper-input></div>
+      <div><paper-input label="Clientid ID" id="clientid"></paper-input></div>
+      <div><paper-input label="Client Secret" id="clientsecret"></paper-input></div>
+      <div><paper-input label="Auth Url" id="authurl"></paper-input></div>
+      <div><paper-input label="Access Token Url" id="accesstokenurl"></paper-input></div>
+      <div horizontal layout end-justified><paper-button affirmative autofocus on-tap="{{addProvider}}">Add</paper-button></div>
+    </paper-dialog>
+    <paper-action-dialog backdrop id="deletenetworkdlg" heading="Delete">
+      <p>Delete the network '{{removeNetwork}}' ?</p>
+      <paper-button affirmative on-tap="{{deleteNetwork}}">Yes</paper-button>
+      <paper-button affirmative autofocus>No</paper-button>
+    </paper-action-dialog>
+    
+    <core-ajax
+      id="loadregs"
+      method="GET"
+      url="/api/authregistry/"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-response="{{oauthRegs}}"></core-ajax>
+    <core-ajax
+      id="regcreator"
+      method="PUT"
+      url="/api/authregistry"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-response="{{refresh}}"></core-ajax>
+    <core-ajax
+      id="networkdeleter"
+      method="DELETE"
+      url="/api/authregistry/{{removeNetwork}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      contentType="application/json"
+      on-core-response="{{refresh}}"></core-ajax>
+    
+  </template>
+  <script>
+    Polymer({
+      user : null,
+      networks:[],
+      removeNetwork : "",
+
+      ready : function () {
+      },
+      clicked : function () {
+        this.$.loadregs.go();
+      },
+      refresh : function () {
+        this.$.loadregs.go();
+      },
+      editElement : function (evt) {
+        var e = evt.target.templateInstance.model.model;
+        this.$.network.value = e.network;
+        this.$.clientid.value = e.clientid;
+        this.$.clientsecret.value = e.clientsecret;
+        this.$.authurl.value = e.auth_url;
+        this.$.accesstokenurl.value = e.accesstoken_url;
+        this.$.addregdialog.toggle();
+      },
+      showDeleteNetwork : function (evt) {
+        var e = evt.target.templateInstance.model.model;
+        this.removeNetwork = e.network;
+        this.$.deletenetworkdlg.toggle();
+        evt.stopPropagation();
+      },
+      deleteNetwork : function () {
+        this.$.networkdeleter.go();
+        this.$.deletenetworkdlg.toggle();
+      },      
+      oauthRegs : function (rsp, det) {
+        console.log("authregs:",det);
+        this.networks = det.response;
+      },
+      showAddDialog : function () {
+        this.$.network.value = "";
+        this.$.clientid.value = "";
+        this.$.clientsecret.value = "";
+        this.$.authurl.value = "";
+        this.$.accesstokenurl.value = "";
+        this.$.addregdialog.toggle();
+      },
+      addProvider : function () {
+        var reg = {
+          network : this.$.network.value,
+          clientid: this.$.clientid.value,
+          clientsecret: this.$.clientsecret.value,
+          auth_url: this.$.authurl.value,
+          accesstoken_url: this.$.accesstokenurl.value,
+        };
+        this.$.regcreator.xhrArgs = {
+          body : JSON.stringify(reg)
+        };
+        this.$.regcreator.go();
+        this.$.addregdialog.toggle();
+      }
+    });
+  </script>
+</polymer-element>

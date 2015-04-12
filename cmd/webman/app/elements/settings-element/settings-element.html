@@ -23,7 +23,7 @@
     <core-ajax
       id="allowance"
       method="PATCH"
-      url="/users/{{user.uid}}/permit/{{duration}}"
+      url="/api/users/{{user.uid}}/permit/{{duration}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{userAllowed}}"></core-ajax>

@@ -5,6 +5,7 @@
 <link rel="import" href="../users-element/users-element.html">
 <link rel="import" href="../gateway-element/gateway-element.html">
 <link rel="import" href="../webman-element/webman-element.html">
+<link rel="import" href="../oauth-registration/oauth-registration.html">
 
 <polymer-element name="webman-app" flex layout vertical attributes="configURL">
   <template>
@@ -65,6 +66,9 @@
             <div id="webman" fit>
               <webman-element fit user="{{user}}" on-error="{{displayError}}"></webman-element>
             </div>
+            <div id="oauth" fit>
+              <oauth-registration fit user="{{user}}" on-error="{{displayError}}"></oauth-registration>
+            </div>
           </core-pages>
         </div>
       </core-scaffold>
@@ -82,7 +86,7 @@
     <core-ajax
       id="userloader"
       method="GET"
-      url="/users/{{user.uid}}"
+      url="/api/users/{{user.uid}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{userNotLoadable}}"
@@ -91,7 +95,7 @@
       id="stageloader"
       method="GET"
       auto
-      url="/configuration/zone"
+      url="/api/configuration/zone"
       handleAs="json"
       response="{{zone}}"></core-ajax>
   </template>
@@ -111,7 +115,8 @@
         {target:"settingspage",icon:"social:person",label:"Me", role:"USER"},
         {target:"users",icon:"social:people",label:"Users", role:"MANAGER"},
         {target:"gateway",icon:"settings-input-component",label:"Gateway", role:"MANAGER",saveable:true},
-        {target:"webman",icon:"cloud-queue",label:"Manager Config", role:"MANAGER",saveable:true}
+        {target:"webman",icon:"cloud-queue",label:"Manager Config", role:"MANAGER",saveable:true},
+        {target:"oauth",icon:"social:domain",label:"Oauth Registry", role:"MANAGER"}
       ],
       allowed : function (items) {
         if (!this.userdetails) return false;

@@ -16,7 +16,7 @@ func init() {
 		Short: "Starts the cli manager to listen on the given address",
 		Long:  "Start the cli manager service on the given address. The CLI manager uses the given auth Urls for authentication",
 		Run: func(cm *cobra.Command, args []string) {
-			publish = cmd.PublishAddress(publish, listen)
+			publish = cmd.PublishAddress(publish, listen, rootPath)
 			cmi, err := NewCLIManager(strings.Split(etcdConfig, ","))
 			if err != nil {
 				panic(err)

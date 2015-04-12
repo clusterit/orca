@@ -64,7 +64,7 @@
     <core-ajax
       id="usersloader"
       method="GET"
-      url="/users"
+      url="/api/users"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{usersNotLoaded}}"
@@ -72,7 +72,7 @@
     <core-ajax
       id="userscreator"
       method="PUT"
-      url="/users"
+      url="/api/users"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -81,7 +81,7 @@
     <core-ajax
       id="usersdeleter"
       method="DELETE"
-      url="/users/{{removeuser}}"
+      url="/api/users/{{removeuser}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"

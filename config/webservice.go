@@ -14,42 +14,41 @@ type ConfigService struct {
 	Config Configer
 }
 
-func (t *ConfigService) uf(f users.UserFunction, rlz users.Roles) restful.RouteFunction {
-	return users.HasRoles(f, t.Auth, t.Users, rlz)
-}
-
 func (t *ConfigService) Shutdown() error {
 	return nil
 }
 
-func (t *ConfigService) Register(c *restful.Container) {
+func (t *ConfigService) Register(root string, c *restful.Container) {
 	ws := new(restful.WebService)
+
+	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles)
+
 	ws.
-		Path("/configuration").
+		Path(root + "/configuration").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
-	ws.Route(ws.PUT("/{zone}/mgrConfig").To(t.uf(t.putManagerConfig, users.ManagerRoles)).
+	ws.Route(ws.PUT("/{zone}/mgrConfig").To(mgr(t.putManagerConfig)).
 		Doc("Store the ManagerConfig config for a given zone").
 		Param(ws.PathParameter("zone", "the zone to put the ManagerConfig config to").DataType("string")).
 		Operation("putManagerConfig").
 		Reads(ManagerConfig{}))
-	ws.Route(ws.GET("/{zone}/mgrConfig").To(t.uf(t.getManagerConfig, users.ManagerRoles)).
+	ws.Route(ws.GET("/{zone}/mgrConfig").To(mgr(t.getManagerConfig)).
 		Doc("Get the ManagerConfig config for a given zone").
 		Param(ws.PathParameter("zone", "the zone to read the ManagerConfig config from").DataType("string")).
 		Operation("getManagerConfig").
 		Writes(ManagerConfig{}))
-	ws.Route(ws.PUT("/{zone}/gateway").To(t.uf(t.putGateway, users.ManagerRoles)).
+	ws.Route(ws.PUT("/{zone}/gateway").To(mgr(t.putGateway)).
 		Doc("Store the Gateway config for a given zone").
 		Param(ws.PathParameter("zone", "the stzoneage to put the Gateway config to").DataType("string")).
 		Operation("putGateway").
 		Reads(Gateway{}))
-	ws.Route(ws.GET("/{zone}/gateway").To(t.uf(t.getGateway, users.ManagerRoles)).
+	ws.Route(ws.GET("/{zone}/gateway").To(mgr(t.getGateway)).
 		Doc("Get the Gateway config for a given zone").
 		Param(ws.PathParameter("zone", "the zone to reamd the JWT from").DataType("string")).
 		Operation("getGateway").
 		Writes(Gateway{}))
-	ws.Route(ws.GET("/zones").To(t.uf(t.getZones, users.ManagerRoles)).
+	ws.Route(ws.GET("/zones").To(mgr(t.getZones)).
 		Doc("Get all current configured zones").
 		Operation("getZones").
 		Writes([]string{}))

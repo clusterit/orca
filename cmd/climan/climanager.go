@@ -17,6 +17,10 @@ import (
 	"gopkg.in/emicklei/go-restful.v1"
 )
 
+const (
+	rootPath = "/api"
+)
+
 // options
 var (
 	etcdConfig string
@@ -69,13 +73,13 @@ func (cm *climanager) Stop() {
 func (cm *climanager) Start() {
 	c := restful.NewContainer()
 	cm.autherService = &auth.AutherService{Auth: cm.authimpl}
-	cm.autherService.Register(c)
+	cm.autherService.Register(rootPath, c)
 
 	cm.usersService = &users.UsersService{Auth: cm.authimpl, Provider: cm.userimpl}
-	cm.usersService.Register(c)
+	cm.usersService.Register(rootPath, c)
 
 	cm.configService = &config.ConfigService{Auth: cm.authimpl, Users: cm.userimpl, Config: cm.configer, Zone: zone}
-	cm.configService.Register(c)
+	cm.configService.Register(rootPath, c)
 
 	cm.wsContainer = c
 	cm.ServeAndPublish()

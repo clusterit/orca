@@ -143,7 +143,15 @@ type jsonPersister struct {
 
 // Create a new JsonPersister at the given basepath.
 func (cc *Cluster) NewJsonPersister(pt string) (Persister, error) {
-	return &jsonPersister{basepath: orcaPersistPath + pt, cc: cc}, nil
+	bp := orcaPersistPath + pt
+	_, err := cc.client.Get(bp, false, false)
+	if err != nil {
+		_, err = cc.client.CreateDir(bp, 0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &jsonPersister{basepath: bp, cc: cc}, nil
 }
 
 func (jp *jsonPersister) path(k string) string {

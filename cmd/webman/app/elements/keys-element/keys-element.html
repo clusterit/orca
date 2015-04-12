@@ -23,7 +23,7 @@
     <core-ajax
       id="keysaver"
       method="PUT"
-      url="/users/{{details.id}}/{{newkeyid}}/{{zone}}/pubkey"
+      url="/api/users/{{details.id}}/{{newkeyid}}/{{zone}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -31,7 +31,7 @@
     <core-ajax
       id="keydeleter"
       method="DELETE"
-      url="/users/{{details.id}}/{{removekey}}/{{zone}}/pubkey"
+      url="/api/users/{{details.id}}/{{removekey}}/{{zone}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -39,7 +39,7 @@
     <core-ajax
       id="keyparser"
       method="POST"
-      url="/users/parsekey"
+      url="/api/users/parsekey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"

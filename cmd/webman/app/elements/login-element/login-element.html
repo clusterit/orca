@@ -11,7 +11,7 @@
     <core-ajax
       id="serverAuth"
       method="POST"
-      url="/auth/"
+      url="/api/auth/"
       params='{"network":"{{network}}", "access_token":"{{access_token}}"}'
       handleAs="json"
       on-core-response="{{storeToken}}"></core-ajax>
