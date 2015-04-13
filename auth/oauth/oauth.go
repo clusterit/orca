@@ -1,6 +1,8 @@
 package oauth
 
 import (
+	"fmt"
+
 	"github.com/clusterit/orca/auth"
 	"github.com/clusterit/orca/etcd"
 	"github.com/clusterit/orca/rest"
@@ -16,12 +18,18 @@ type OauthRegistration struct {
 	Network        string `json:"network"`
 	ClientId       string `json:"clientid"`
 	ClientSecrect  string `json:"clientsecret"`
+	Scopes         string `json:"scopes"`
 	AuthUrl        string `json:"auth_url"`
 	AccessTokenUrl string `json:"accesstoken_url"`
+	UserinfoUrl    string `json:"userinfo_url"`
+	PathEmail      string `json:"pathemail"`
+	PathName       string `json:"pathname"`
+	PathPicture    string `json:"pathpicture"`
+	PathCover      string `json:"pathcover"`
 }
 
 type OAuthRegistry interface {
-	Create(network string, clientid, clientsecrect, authurl, accessurl string) (*OauthRegistration, error)
+	Create(network string, clientid, clientsecrect, scopes, authurl, accessurl, userinfourl, pathemail, pathname, pathpicture, pathcover string) (*OauthRegistration, error)
 	Delete(network string) (*OauthRegistration, error)
 	Get(network string) (*OauthRegistration, error)
 	GetAll() ([]OauthRegistration, error)
@@ -51,13 +59,22 @@ func (a *oauthApp) Get(network string) (*OauthRegistration, error) {
 	return &res, a.persist.Get(network, &res)
 }
 
-func (a *oauthApp) Create(network, clientid, clientsecret, authurl, accessurl string) (*OauthRegistration, error) {
+func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, accessurl, userinfourl, pathemail, pathname, pathpicture, pathcover string) (*OauthRegistration, error) {
+	if network == "" {
+		return nil, fmt.Errorf("empty network not allowed")
+	}
 	reg := OauthRegistration{
 		Network:        network,
 		ClientId:       clientid,
 		ClientSecrect:  clientsecret,
+		Scopes:         scopes,
 		AuthUrl:        authurl,
 		AccessTokenUrl: accessurl,
+		UserinfoUrl:    userinfourl,
+		PathEmail:      pathemail,
+		PathName:       pathname,
+		PathPicture:    pathpicture,
+		PathCover:      pathcover,
 	}
 	a.persist.Put(network, reg)
 	return &reg, nil
@@ -113,7 +130,18 @@ func (t *AuthRegService) createReg(me *users.User, request *restful.Request, res
 		rest.HandleError(err, response)
 		return
 	}
-	rest.HandleEntity(t.Registry.Create(reg.Network, reg.ClientId, reg.ClientSecrect, reg.AuthUrl, reg.AccessTokenUrl))(request, response)
+	rest.HandleEntity(t.Registry.Create(
+		reg.Network,
+		reg.ClientId,
+		reg.ClientSecrect,
+		reg.Scopes,
+		reg.AuthUrl,
+		reg.AccessTokenUrl,
+		reg.UserinfoUrl,
+		reg.PathEmail,
+		reg.PathName,
+		reg.PathPicture,
+		reg.PathCover))(request, response)
 }
 
 func (t *AuthRegService) deleteReg(me *users.User, request *restful.Request, response *restful.Response) {

@@ -22,11 +22,17 @@
     <paper-fab id="addreg" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
 
     <paper-dialog backdrop id="addregdialog" heading="Add/Update Provider" >
-      <div><paper-input label="Network" id="network"></paper-input></div>
-      <div><paper-input label="Clientid ID" id="clientid"></paper-input></div>
-      <div><paper-input label="Client Secret" id="clientsecret"></paper-input></div>
-      <div><paper-input label="Auth Url" id="authurl"></paper-input></div>
-      <div><paper-input label="Access Token Url" id="accesstokenurl"></paper-input></div>
+      <div><paper-input flex style="width: 100%;font-family: monospace;" label="Network" id="network" ></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Clientid ID" id="clientid"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Client Secret" id="clientsecret"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Scopes" id="scopes"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Auth Url" id="authurl"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Access Token Url" id="accesstokenurl"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Userinfo Url" id="userinfourl"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Email" id="pathemail"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Name" id="pathname"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Picture" id="pathpicture"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Cover" id="pathcover"></paper-input></div>
       <div horizontal layout end-justified><paper-button affirmative autofocus on-tap="{{addProvider}}">Add</paper-button></div>
     </paper-dialog>
     <paper-action-dialog backdrop id="deletenetworkdlg" heading="Delete">
@@ -42,7 +48,8 @@
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
-      on-core-response="{{oauthRegs}}"></core-ajax>
+      on-core-response="{{oauthRegs}}"
+      on-core-error="{{remoteError}}"></core-ajax>
     <core-ajax
       id="regcreator"
       method="PUT"
@@ -50,7 +57,8 @@
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
-      on-core-response="{{refresh}}"></core-ajax>
+      on-core-response="{{providerAdded}}"
+      on-core-error="{{remoteError}}"></core-ajax>
     <core-ajax
       id="networkdeleter"
       method="DELETE"
@@ -58,7 +66,8 @@
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
-      on-core-response="{{refresh}}"></core-ajax>
+      on-core-response="{{providerRemoved}}"
+      on-core-error="{{remoteError}}"></core-ajax>
     
   </template>
   <script>
@@ -72,16 +81,22 @@
       clicked : function () {
         this.$.loadregs.go();
       },
-      refresh : function () {
-        this.$.loadregs.go();
+      remoteError : function (rsp, det) {
+        this.fire("error",det.response.response.error);
       },
       editElement : function (evt) {
         var e = evt.target.templateInstance.model.model;
         this.$.network.value = e.network;
         this.$.clientid.value = e.clientid;
         this.$.clientsecret.value = e.clientsecret;
+        this.$.scopes.value = e.scopes;
         this.$.authurl.value = e.auth_url;
+        this.$.userinfourl.value = e.userinfo_url;
         this.$.accesstokenurl.value = e.accesstoken_url;
+        this.$.pathemail.value = e.pathemail;
+        this.$.pathname.value = e.pathname;
+        this.$.pathpicture.value = e.pathpicture;
+        this.$.pathcover.value=e.pathcover;
         this.$.addregdialog.toggle();
       },
       showDeleteNetwork : function (evt) {
@@ -92,33 +107,49 @@
       },
       deleteNetwork : function () {
         this.$.networkdeleter.go();
-        this.$.deletenetworkdlg.toggle();
       },      
       oauthRegs : function (rsp, det) {
-        console.log("authregs:",det);
         this.networks = det.response;
       },
       showAddDialog : function () {
         this.$.network.value = "";
         this.$.clientid.value = "";
         this.$.clientsecret.value = "";
+        this.$.scopes.value = "";
         this.$.authurl.value = "";
+        this.$.userinfourl.value = "";
         this.$.accesstokenurl.value = "";
+        this.$.pathemail.value = "";
+        this.$.pathname.value = "";
+        this.$.pathpicture.value = "";
+        this.$.pathcover.value="";
         this.$.addregdialog.toggle();
+      },
+      providerAdded : function () {
+        this.$.addregdialog.toggle();
+        this.$.loadregs.go();
+      },
+      providerRemoved : function () {
+        this.$.loadregs.go();
       },
       addProvider : function () {
         var reg = {
           network : this.$.network.value,
           clientid: this.$.clientid.value,
           clientsecret: this.$.clientsecret.value,
+          scopes : this.$.scopes.value,
           auth_url: this.$.authurl.value,
+          userinfo_url : this.$.userinfourl.value,
           accesstoken_url: this.$.accesstokenurl.value,
+          pathemail : this.$.pathemail.value,
+          pathname:this.$.pathname.value,
+          pathpicture:this.$.pathpicture.value,
+          pathcover:this.$.pathcover.value
         };
         this.$.regcreator.xhrArgs = {
           body : JSON.stringify(reg)
         };
         this.$.regcreator.go();
-        this.$.addregdialog.toggle();
       }
     });
   </script>

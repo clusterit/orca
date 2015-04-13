@@ -12,7 +12,6 @@
 .keyelement {
   display:inline-block;
   padding: 3px;
-  xpadding-top: 5px;
   border-bottom: 1px solid #ddd;
   line-height: 1.5em;
 }

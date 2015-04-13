@@ -126,7 +126,7 @@ func (wm *webmanager) initWithZone(zone string) error {
 		return err
 	}
 
-	wm.authimpl = jwt.NewAuther(jwtPk)
+	wm.authimpl = jwt.NewAuther(jwtPk, wm.oauthreg)
 
 	go func() {
 		mgr, stp, err := wm.configimpl.ManagerConfig(zone)
@@ -150,7 +150,7 @@ func (cm *webmanager) switchSettings(cfg config.ManagerConfig) error {
 		return err
 	}
 
-	cm.authimpl = jwt.NewAuther(jwtPk)
+	cm.authimpl = jwt.NewAuther(jwtPk, cm.oauthreg)
 	cm.usersService.Auth = cm.authimpl
 	cm.configService.Auth = cm.authimpl
 	return nil
