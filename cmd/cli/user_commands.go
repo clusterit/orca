@@ -6,6 +6,23 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var usercmd = &cobra.Command{
+	Use:   "user [cmd]",
+	Short: "user commands",
+	Long:  "user commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
+
+var keycmd = &cobra.Command{
+	Use:   "key [cmd]",
+	Short: "key commands",
+	Long:  "key commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
+}
 var addUser = &cobra.Command{
 	Use:   "add [uid] [name] [roles...]",
 	Short: "add a user",
@@ -41,7 +58,7 @@ var listUsers = &cobra.Command{
 }
 var keyname string
 var addKey = &cobra.Command{
-	Use:   "addkey [uid] [key-file]",
+	Use:   "add [uid] [key-file]",
 	Short: "add a key",
 	Long:  "Add a key to the authorized keys of the user. If no keyname is given, the key-file will be parsed to get one",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -53,7 +70,7 @@ var addKey = &cobra.Command{
 	},
 }
 var delKey = &cobra.Command{
-	Use:   "delkey [uid] [key-name]",
+	Use:   "del [uid] [key-name]",
 	Short: "delete a key",
 	Long:  "Delete a key from the authorized keys of the user.",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -65,6 +82,8 @@ var delKey = &cobra.Command{
 	},
 }
 
-func initUser() {
+func init() {
+	usercmd.AddCommand(addUser, listUsers)
+	keycmd.AddCommand(addKey, delKey)
 	addKey.Flags().StringVarP(&keyname, "keyname", "k", "", "the keyname to use. if empty try to parse the given keyfile")
 }

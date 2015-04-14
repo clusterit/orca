@@ -74,7 +74,7 @@ var gateway = &cobra.Command{
 	},
 }
 
-func initConfig() {
+func init() {
 	gateway.Flags().StringVarP(&loglevel, "loglevel", "l", "", "the loglevel to set")
 	gateway.Flags().StringVarP(&timecheck, "timecheck", "t", "", "update the CheckAllow field [true/false]")
 	gateway.Flags().StringVarP(&keyfile, "keyfile", "k", "", "the keyfile for the host key")

@@ -30,19 +30,19 @@ func (c *cli) createUser(id, name string, roles ...string) error {
 		rlz[i] = users.Role(r)
 	}
 	t := users.User{Id: id, Name: name, Roles: rlz}
-	r := c.rq("PUT", "/users", t)
+	r := c.rq("PUT", "/api/users", t)
 	return c.unmarshal(r, nil)
 }
 
 func (c *cli) listUsers() ([]users.User, error) {
 	var res []users.User
-	r := c.rq("GET", "/users", nil)
+	r := c.rq("GET", "/api/users", nil)
 	return res, c.unmarshal(r, &res)
 }
 
 func (c *cli) parseKey(k string) (*users.Key, error) {
 	var key users.Key
-	r := c.rq("POST", "/users/parsekey", k)
+	r := c.rq("POST", "/api/users/parsekey", k)
 	return &key, c.unmarshal(r, &key)
 }
 
@@ -59,29 +59,29 @@ func (c *cli) addKey(uid, keyname string, file string) error {
 		keyname = k.Id
 	}
 	// zone hardcoded, cause orca don't uses zones for users
-	r := c.rq("PUT", fmt.Sprintf("/users/%s/%s/zone/pubkey", uid, keyname), string(kf))
+	r := c.rq("PUT", fmt.Sprintf("/api/users/%s/%s/zone/pubkey", uid, keyname), string(kf))
 	return c.unmarshal(r, nil)
 }
 
 func (c *cli) deleteKey(uid, keyname string) error {
 	// zone hardcoded, cause orca don't uses zones for users
-	r := c.rq("DELETE", fmt.Sprintf("/users/%s/%s/zone/pubkey", uid, keyname), nil)
+	r := c.rq("DELETE", fmt.Sprintf("/api/users/%s/%s/zone/pubkey", uid, keyname), nil)
 	return c.unmarshal(r, nil)
 }
 
 func (c *cli) zones() ([]string, error) {
 	var res []string
-	r := c.rq("GET", "/configuration/zones", nil)
+	r := c.rq("GET", "/api/configuration/zones", nil)
 	return res, c.unmarshal(r, &res)
 }
 
 func (c *cli) getGateway(stage string) (*config.Gateway, error) {
 	var res config.Gateway
-	r := c.rq("GET", fmt.Sprintf("/configuration/%s/gateway", stage), nil)
+	r := c.rq("GET", fmt.Sprintf("/api/configuration/%s/gateway", stage), nil)
 	return &res, c.unmarshal(r, &res)
 }
 
 func (c *cli) putGateway(stage string, gw config.Gateway) error {
-	r := c.rq("PUT", fmt.Sprintf("/configuration/%s/gateway", stage), gw)
+	r := c.rq("PUT", fmt.Sprintf("/api/configuration/%s/gateway", stage), gw)
 	return c.unmarshal(r, nil)
 }

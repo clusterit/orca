@@ -7,6 +7,7 @@ import (
 
 	"github.com/clusterit/orca/auth"
 	"github.com/clusterit/orca/auth/basic"
+	"github.com/clusterit/orca/auth/oauth"
 	"github.com/clusterit/orca/cmd"
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/etcd"
@@ -55,14 +56,16 @@ func (u *uids) Set(value string) error {
 }
 
 type climanager struct {
-	cluster       *etcd.Cluster
-	userimpl      users.Users
-	authimpl      auth.Auther
-	configer      config.Configer
-	autherService *auth.AutherService
-	configService *config.ConfigService
-	usersService  *users.UsersService
-	wsContainer   *restful.Container
+	cluster        *etcd.Cluster
+	userimpl       users.Users
+	authimpl       auth.Auther
+	configer       config.Configer
+	oauthreg       oauth.OAuthRegistry
+	autherService  *auth.AutherService
+	configService  *config.ConfigService
+	usersService   *users.UsersService
+	wsContainer    *restful.Container
+	authregService *oauth.AuthRegService
 }
 
 func (cm *climanager) Stop() {
@@ -80,6 +83,9 @@ func (cm *climanager) Start() {
 
 	cm.configService = &config.ConfigService{Auth: cm.authimpl, Users: cm.userimpl, Config: cm.configer, Zone: zone}
 	cm.configService.Register(rootPath, c)
+
+	cm.authregService = &oauth.AuthRegService{Auth: cm.authimpl, Users: cm.userimpl, Registry: cm.oauthreg}
+	cm.authregService.Register(rootPath, c)
 
 	cm.wsContainer = c
 	cm.ServeAndPublish()
@@ -111,6 +117,7 @@ func (cm *climanager) switchSettings(cfg config.ManagerConfig) {
 	cm.authimpl = basic.NewAuther(cfg.AuthUrl, cfg.VerifyCert)
 	cm.usersService.Auth = cm.authimpl
 	cm.configService.Auth = cm.authimpl
+	cm.authregService.Auth = cm.authimpl
 }
 
 func (cm *climanager) ServeAndPublish() {
@@ -141,6 +148,11 @@ func NewCLIManager(etcds []string) (*climanager, error) {
 		return nil, err
 	}
 
+	reg, err := oauth.New(cc)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(managers) > 0 {
 		for _, m := range managers {
 			u, e := userimpl.Get(m)
@@ -160,6 +172,7 @@ func NewCLIManager(etcds []string) (*climanager, error) {
 	climan := &climanager{cluster: cc,
 		userimpl: userimpl,
 		configer: cfger,
+		oauthreg: reg,
 	}
 	climan.initWithZone(zone)
 	return climan, nil

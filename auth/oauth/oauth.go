@@ -76,6 +76,8 @@ func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, acce
 		PathPicture:    pathpicture,
 		PathCover:      pathcover,
 	}
+	// if this is a known network and there are empty fields, fill them ...
+	reg = fillDefaults(network, reg)
 	a.persist.Put(network, reg)
 	return &reg, nil
 }
