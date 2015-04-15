@@ -15,6 +15,25 @@
   height: 100%;
 }
 
+.network {
+  color: #888;
+  width: 10em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.clientid {
+  color: #888;
+  width: 30em;
+  font-weight: bold;
+  font-family: monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  display:inline-block;
+}
+
 .actions {
   display:inline-block;
   width: 10em;

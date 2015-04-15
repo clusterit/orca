@@ -167,6 +167,7 @@ func (wm *webmanager) ServeAndPublish() {
 	logger.Infof("start listening on %s", listen)
 	http.ListenAndServe(listen, nil)
 }
+
 func main() {
 	var cmdServe = &cobra.Command{
 		Use:   "serve",

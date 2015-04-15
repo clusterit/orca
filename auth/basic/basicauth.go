@@ -69,9 +69,9 @@ func (g *basicAuther) Get(token string) (*auth.AuthUser, error) {
 	return nil, err
 }
 
-func (g *basicAuther) Create(network, authToken string) (string, *auth.AuthUser, error) {
+func (g *basicAuther) Create(network, authToken, redirectUrl string) (string, string, *auth.AuthUser, error) {
 	u, e := g.Get(authToken)
-	return authToken, u, e
+	return authToken, "", u, e
 }
 
 func NewAuther(url string, verifyCert bool) auth.Auther {

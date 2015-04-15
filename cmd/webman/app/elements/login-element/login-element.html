@@ -1,13 +1,17 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="login-element" attributes="config">
+<polymer-element name="login-element" >
   <template>
     <link rel="stylesheet" href="login-element.css">
-    <paper-shadow id="logins" z="2" >
-      <div horizontal center-justified layout>
-        <paper-icon-button on-tap="{{doLoginGoogle}}" class="red" icon="google:google" title="red icon"></paper-icon-button>
-      </div>
-    </paper-shadow>
+    <template repeat="{{p in providers}}">
+      <template if="{{icons[p.network]}}">
+        <paper-icon-button on-tap="{{doLogin}}" src="{{icons[p.network]}}" title="{{p.network}}"></paper-icon-button>
+      </template>
+      <template if="{{! icons[p.network]}}">
+        <paper-icon-button on-tap="{{doLogin}}" src="/images/email.png" title="{{p.network}}"></paper-icon-button>
+      </template>
+    </template>
+
     <core-ajax
       id="serverAuth"
       method="POST"
@@ -15,44 +19,78 @@
       params='{"network":"{{network}}", "access_token":"{{access_token}}"}'
       handleAs="json"
       on-core-response="{{storeToken}}"></core-ajax>
-
+    <core-ajax
+      auto
+      id="loadregs"
+      method="GET"
+      url="/api/authregistry/loginProviders"
+      handleAs="json"
+      contentType="application/json"
+      on-core-response="{{oauthProviders}}"
+      on-core-error="{{remoteError}}"></core-ajax>
   </template>
 
   <script src="../../bower_components/hello/dist/hello.all.min.js"></script>
   <script>
     Polymer({
-      config: null,
       network:"",
       access_token : "",
+      providers : [],
+      icons : {
+        "google" : "/images/googleplus.png",
+        "github" : "/images/github.png",
+        "twitter" : "/images/twitter.png",
+        "facebook" : "/images/facebook.png",
+        "reddit" : "/images/reddit.png"
+      },
 
       ready : function () {
+        var self = this;
+        hello.on('auth', function(auth){
+          console.log("auth event:",auth)
+        });
+        hello.on('auth.login', function(auth){
+          console.log("auth login event:",auth)
+          self.network = auth.network;
+          self.access_token = auth.authResponse.access_token;
+          self.$.serverAuth.go();
+        });
       },
+      remoteError : function (r, det) {
+        console.log("error fetching providers: ", r);
+      },
+      oauthProviders : function (r, det) {
+        this.providers = det.response;
+        this.providers.forEach (function (p) {
+          this.initProvider(p);
+        }, this);
+      },
+      initProvider : function (p) {
+        var rq = {};
+        rq[p.network] = p.clientid;
+        hello.init (rq, {
+          redirect_uri : "redirect.html",
+          response_type : 'code',
+          oauth_proxy : '/api/auth/oauth',
+          force : false,
+          scope: p.scopes
+        });
+        console.log("rq=",rq);
+        console.log("p=",p);
+      },
+      doLogin : function (evt) {
+        var e = evt.target.templateInstance.model.p;
+        hello( e.network ).login()
+      },      
       storeToken : function (r,det) {
         var data = det.response;
         data.token = det.xhr.getResponseHeader("Authorization");
         //console.log("storetoken:",data);
         this.fire("login", {data:data});
       },
-      login : function() {
-        var self = this;
-        hello.init(this.config.oauth, {
-            redirect_uri:"redirect.html",
-            force: false,
-            scope: "email"
-          }
-        );
-        hello.on('auth.login', function(auth){
-          self.network = auth.network;
-          self.access_token = auth.authResponse.access_token;
-          self.$.serverAuth.go();
-        });
-      },
       logout : function () {
         hello(this.network).logout();
       },
-      doLoginGoogle: function() {
-        hello( 'google' ).login()
-      }
     });
   </script>
 </polymer-element>

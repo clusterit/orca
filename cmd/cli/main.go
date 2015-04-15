@@ -68,7 +68,7 @@ func main() {
 	cli.PersistentFlags().BoolVarP(&password, "password", "p", false, "prompt for a password if set. Environment variable ORCA_PASSWORD overwrites this")
 	cli.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug output of the HTTP flow")
 
-	cli.AddCommand(usercmd, keycmd, zones, gateway, oauth)
+	cli.AddCommand(usercmd, keycmd, zones, gateway, oauthCmd)
 
 	viper.SetEnvPrefix(cmd.OrcaPrefix)
 	viper.AutomaticEnv()

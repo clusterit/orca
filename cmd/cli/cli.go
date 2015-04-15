@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/clusterit/orca/auth/oauth"
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/users"
 
@@ -83,5 +84,20 @@ func (c *cli) getGateway(stage string) (*config.Gateway, error) {
 
 func (c *cli) putGateway(stage string, gw config.Gateway) error {
 	r := c.rq("PUT", fmt.Sprintf("/api/configuration/%s/gateway", stage), gw)
+	return c.unmarshal(r, nil)
+}
+
+func (c *cli) listOauthProviders() ([]oauth.OauthRegistration, error) {
+	var res []oauth.OauthRegistration
+	r := c.rq("GET", "/api/authregistry", nil)
+	return res, c.unmarshal(r, &res)
+}
+
+func (c *cli) putProvider(p oauth.OauthRegistration) error {
+	r := c.rq("PUT", "/api/authregistry", p)
+	return c.unmarshal(r, nil)
+}
+func (c *cli) delProvider(n string) error {
+	r := c.rq("DELETE", "/api/authregistry/"+n, nil)
 	return c.unmarshal(r, nil)
 }

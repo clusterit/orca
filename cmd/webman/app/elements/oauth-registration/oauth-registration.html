@@ -22,14 +22,14 @@
     <paper-fab id="addreg" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
 
     <paper-dialog backdrop id="addregdialog" heading="Add/Update Provider" >
-      <div><paper-input flex style="width: 100%;font-family: monospace;" label="Network" id="network" ></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Network" id="network" ></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Clientid ID" id="clientid"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Client Secret" id="clientsecret"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Scopes" id="scopes"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Auth Url" id="authurl"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Access Token Url" id="accesstokenurl"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Userinfo Url" id="userinfourl"></paper-input></div>
-      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Email" id="pathemail"></paper-input></div>
+      <div><paper-input style="width: 100%;font-family: monospace;" label="Path Id" id="pathid"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Path Name" id="pathname"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Path Picture" id="pathpicture"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Path Cover" id="pathcover"></paper-input></div>
@@ -93,7 +93,7 @@
         this.$.authurl.value = e.auth_url;
         this.$.userinfourl.value = e.userinfo_url;
         this.$.accesstokenurl.value = e.accesstoken_url;
-        this.$.pathemail.value = e.pathemail;
+        this.$.pathid.value = e.pathid;
         this.$.pathname.value = e.pathname;
         this.$.pathpicture.value = e.pathpicture;
         this.$.pathcover.value=e.pathcover;
@@ -119,7 +119,7 @@
         this.$.authurl.value = "";
         this.$.userinfourl.value = "";
         this.$.accesstokenurl.value = "";
-        this.$.pathemail.value = "";
+        this.$.pathid.value = "";
         this.$.pathname.value = "";
         this.$.pathpicture.value = "";
         this.$.pathcover.value="";
@@ -141,7 +141,7 @@
           auth_url: this.$.authurl.value,
           userinfo_url : this.$.userinfourl.value,
           accesstoken_url: this.$.accesstokenurl.value,
-          pathemail : this.$.pathemail.value,
+          pathid : this.$.pathid.value,
           pathname:this.$.pathname.value,
           pathpicture:this.$.pathpicture.value,
           pathcover:this.$.pathcover.value

@@ -21,12 +21,9 @@ var zones = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		c := newCli()
 		stg, err := c.zones()
-		if err != nil {
-			fmt.Printf("%s\n", err)
-		} else {
-			for _, s := range stg {
-				fmt.Printf("%s\n", s)
-			}
+		exitWhenError(err)
+		for _, s := range stg {
+			fmt.Printf("%s\n", s)
 		}
 	},
 }
@@ -39,10 +36,7 @@ var gateway = &cobra.Command{
 		c := newCli()
 		zone := args[0]
 		gw, err := c.getGateway(zone)
-		if err != nil {
-			fmt.Printf("%s\n", err)
-			return
-		}
+		exitWhenError(err)
 		update := false
 		if !isNone(loglevel) && loglevel != gw.LogLevel {
 			gw.LogLevel = loglevel
@@ -54,10 +48,7 @@ var gateway = &cobra.Command{
 		}
 		if keyfile != "" {
 			kf, err := ioutil.ReadFile(keyfile)
-			if err != nil {
-				fmt.Printf("%s\n", err)
-				return
-			}
+			exitWhenError(err)
 			gw.HostKey = string(kf)
 			update = true
 		}

@@ -7,7 +7,7 @@
 <link rel="import" href="../webman-element/webman-element.html">
 <link rel="import" href="../oauth-registration/oauth-registration.html">
 
-<polymer-element name="webman-app" flex layout vertical attributes="configURL">
+<polymer-element name="webman-app" flex layout vertical >
   <template>
     <link rel="stylesheet" href="webman-app.css">
     <core-pages valueattr="id" selected="{{page}}" flex>
@@ -79,11 +79,6 @@
     </core-pages>
     <paper-toast id="errormsg"></paper-toast>
     <core-ajax
-      auto
-      url="{{configURL}}"
-      handleAs="json"
-      on-core-response="{{handleConfigResponse}}"></core-ajax>
-    <core-ajax
       id="userloader"
       method="GET"
       url="/api/users/{{user.uid}}"
@@ -154,10 +149,6 @@
         if (cn.clicked)
           cn.clicked();
         this.$.mainpage.closeDrawer();
-      },
-      handleConfigResponse : function (e,d) {
-        this.config = d.response;
-        this.$.login.login();
       },
 
       handleLoggedIn: function(evt,u) {
