@@ -25,6 +25,9 @@ var oauthCmd = &cobra.Command{
 	Use:   "oauth",
 	Short: "show, register and unregister oauth providers",
 	Long:  "show, register and unregister oauth providers",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
 }
 
 var oauthList = &cobra.Command{

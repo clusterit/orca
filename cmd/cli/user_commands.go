@@ -11,12 +11,18 @@ var usercmd = &cobra.Command{
 	Use:   "user [cmd]",
 	Short: "user commands",
 	Long:  "user commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
 }
 
 var keycmd = &cobra.Command{
 	Use:   "key [cmd]",
 	Short: "key commands",
 	Long:  "key commands",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
 }
 var addUser = &cobra.Command{
 	Use:   "add [uid] [name] [roles...]",

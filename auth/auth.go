@@ -2,8 +2,8 @@ package auth
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/clusterit/orca/rest"
 
@@ -19,11 +19,13 @@ type AuthUser struct {
 	ThumbnailUrl  string `json:"thumbnail"`
 }
 
+type Token map[string]string
+
 // A Auther creates an AuthUser from a network and an access_token
 // for this network.
 type Auther interface {
 	// Return a JWT token out of a given auth'd user
-	Create(network, authCode, redirectUrl string) (string, string, *AuthUser, error)
+	Create(network, authCode, redirectUrl string) (string, Token, *AuthUser, error)
 	// Read the User out of the JWT token
 	Get(token string) (*AuthUser, error)
 }
@@ -65,19 +67,12 @@ func (t *AutherService) Register(root string, c *restful.Container) {
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
-	/*
-		ws.Route(ws.POST("/").To(t.createToken).
-			Consumes("application/x-www-form-urlencoded").
-			Doc("create a new auth token").
-			Param(ws.FormParameter("network", "the auth network").DataType("string")).
-			Param(ws.FormParameter("access_token", "the access token for the user data").DataType("string")).
-			Returns(200, "OK", AuthUser{}).
-			Operation("createToken"))*/
 	ws.Route(ws.GET("/oauth").To(t.createTokenFromCode).
 		Consumes("application/x-www-form-urlencoded").
-		Doc("create a new auth token").
-		//Param(ws.FormParameter("network", "the auth network").DataType("string")).
-		//Param(ws.FormParameter("access_token", "the access token for the user data").DataType("string")).
+		Doc("create a new access token").
+		Param(ws.FormParameter("state", "the state field of the client").DataType("string")).
+		Param(ws.FormParameter("code", "the code sent from the oauth provider").DataType("string")).
+		Param(ws.FormParameter("redirect_uri", "the redirect URI").DataType("string")).
 		Returns(200, "OK", AuthUser{}).
 		Operation("createTokenFromCode"))
 	ws.Route(ws.GET("/user").To(t.getAuth).
@@ -91,43 +86,29 @@ func (t *AutherService) Register(root string, c *restful.Container) {
 
 func (t *AutherService) createTokenFromCode(rq *restful.Request, rsp *restful.Response) {
 	parms := rq.Request.URL.Query()
-	state := parms.Get("state")
+	state := rq.QueryParameter("state")
+	code := rq.QueryParameter("code")
+	redirUri := rq.QueryParameter("redirect_uri")
 	res := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(state), &res); err != nil {
 		rsp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 	network := res["network"].(string)
-	//code := res["code"].(string)
-	code := parms.Get("code")
-	log.Printf("%s : %s", network, code)
-	tk, oauthtk, u, err := t.Auth.Create(network, code, parms.Get("redirect_uri"))
+	tk, oauthtk, _, err := t.Auth.Create(network, code, parms.Get("redirect_uri"))
 	if err != nil {
 		rsp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	log.Printf("%#v", res)
-	log.Printf("%s, %#v, %#v", tk, oauthtk, u)
-	rsp.ResponseWriter.Write([]byte(oauthtk))
-	//http.Redirect(rsp.ResponseWriter, rq.Request, parms.Get("redirect_uri"), http.StatusTemporaryRedirect)
-	//rsp.Write("asdf")
+	redirVals := make(url.Values)
+	for k, v := range oauthtk {
+		redirVals.Add(k, v)
+	}
+	redirVals.Add("orca", tk)
+	redir := redirUri + "?" + redirVals.Encode() + "&state=" + state
+	http.Redirect(rsp.ResponseWriter, rq.Request, redir, http.StatusTemporaryRedirect)
 }
 
-// REST function to create a JWT token. take the network and the toke out of the request
-// and delegate the call to the inside service
-/*
-func (t *AutherService) createToken(rq *restful.Request, rsp *restful.Response) {
-	network := rq.Request.FormValue("network")
-	accessToken := rq.Request.FormValue("access_token")
-	tok, auth, err := t.Auth.Create(network, accessToken, "")
-	if err != nil {
-		rsp.WriteError(http.StatusInternalServerError, err)
-		return
-	}
-	rsp.Header().Add("Authorization", tok)
-	rsp.WriteEntity(*auth)
-}
-*/
 // Get the AuthUser from the JWT token.
 func (t *AutherService) getAuth(rq *restful.Request, rsp *restful.Response) {
 	token := rq.HeaderParameter("Authorization")

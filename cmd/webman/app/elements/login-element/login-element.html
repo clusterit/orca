@@ -13,10 +13,10 @@
     </template>
 
     <core-ajax
-      id="serverAuth"
-      method="POST"
-      url="/api/auth/"
-      params='{"network":"{{network}}", "access_token":"{{access_token}}"}'
+      id="authuser"
+      method="GET"
+      url="/api/auth/user"
+      headers='{"Authorization":"{{orcaToken}}"}'
       handleAs="json"
       on-core-response="{{storeToken}}"></core-ajax>
     <core-ajax
@@ -36,6 +36,8 @@
       network:"",
       access_token : "",
       providers : [],
+      providerMap : {},
+      orcaToken : "",
       icons : {
         "google" : "/images/googleplus.png",
         "github" : "/images/github.png",
@@ -53,7 +55,8 @@
           console.log("auth login event:",auth)
           self.network = auth.network;
           self.access_token = auth.authResponse.access_token;
-          self.$.serverAuth.go();
+          self.orcaToken = auth.authResponse.orca;
+          self.$.authuser.go();
         });
       },
       remoteError : function (r, det) {
@@ -75,17 +78,14 @@
           force : false,
           scope: p.scopes
         });
-        console.log("rq=",rq);
-        console.log("p=",p);
       },
       doLogin : function (evt) {
         var e = evt.target.templateInstance.model.p;
         hello( e.network ).login()
-      },      
+      },  
       storeToken : function (r,det) {
         var data = det.response;
-        data.token = det.xhr.getResponseHeader("Authorization");
-        //console.log("storetoken:",data);
+        data.token = this.orcaToken;
         this.fire("login", {data:data});
       },
       logout : function () {

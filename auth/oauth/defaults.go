@@ -8,7 +8,7 @@ const (
 var (
 	defaultBackends = map[string]OauthRegistration{
 		googleNetwork: OauthRegistration{
-			Scopes:         "https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/userinfo.profile,https://www.googleapis.com/auth/plus.me",
+			Scopes:         "openid,profile,email,https://www.googleapis.com/auth/plus.me",
 			AuthUrl:        "https://accounts.google.com/o/oauth2/auth",
 			AccessTokenUrl: "https://accounts.google.com/o/oauth2/token",
 			UserinfoUrl:    "https://www.googleapis.com/plus/v1/people/me",

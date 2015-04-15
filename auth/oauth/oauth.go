@@ -32,6 +32,7 @@ type LoginProvider struct {
 	Network  string `json:"network"`
 	ClientId string `json:"clientid"`
 	Scopes   string `json:"scopes"`
+	AuthUrl  string `json:"authurl"`
 }
 
 type OAuthRegistry interface {
@@ -176,6 +177,7 @@ func (t *AuthRegService) loginProviders(request *restful.Request, response *rest
 		provs[i].Network = r.Network
 		provs[i].ClientId = r.ClientId
 		provs[i].Scopes = r.Scopes
+		provs[i].AuthUrl = r.AuthUrl
 	}
 	response.WriteEntity(provs)
 }

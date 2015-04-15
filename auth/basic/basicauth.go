@@ -33,6 +33,9 @@ func parseBasicAuth(token string) (username, password string, ok bool) {
 }
 
 func (g *basicAuther) check(url string, user, pwd string) error {
+	if url == "" { // assume no check wanted
+		return nil
+	}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: !g.verifyCert},
 	}
@@ -69,9 +72,9 @@ func (g *basicAuther) Get(token string) (*auth.AuthUser, error) {
 	return nil, err
 }
 
-func (g *basicAuther) Create(network, authToken, redirectUrl string) (string, string, *auth.AuthUser, error) {
+func (g *basicAuther) Create(network, authToken, redirectUrl string) (string, auth.Token, *auth.AuthUser, error) {
 	u, e := g.Get(authToken)
-	return authToken, "", u, e
+	return authToken, nil, u, e
 }
 
 func NewAuther(url string, verifyCert bool) auth.Auther {

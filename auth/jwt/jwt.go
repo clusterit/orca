@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -56,11 +55,11 @@ func (ja *jwtAuthorizer) parse(value string) (*jwt.Token, error) {
 // Create a JWT token for the given authCode inside the given network.
 // There must be a registered backend for the network. This backend is used
 // to query the AuthUser and this user is wrapped in the JWT token.
-func (ja *jwtAuthorizer) Create(network, authCode, redirectUrl string) (string, string, *auth.AuthUser, error) {
+func (ja *jwtAuthorizer) Create(network, authCode, redirectUrl string) (string, auth.Token, *auth.AuthUser, error) {
 	//auth, err := backends[network].Get(authToken)
 	auth, oauthtok, err := ja.auth(network, authCode, redirectUrl)
 	if err != nil {
-		return "", "", nil, err
+		return "", nil, nil, err
 	}
 
 	// create a signer for rsa 256
@@ -88,10 +87,10 @@ func (ja *jwtAuthorizer) Get(token string) (*auth.AuthUser, error) {
 	return &a, nil
 }
 
-func (ja *jwtAuthorizer) auth(network, code, redirectUrl string) (*auth.AuthUser, string, error) {
+func (ja *jwtAuthorizer) auth(network, code, redirectUrl string) (*auth.AuthUser, auth.Token, error) {
 	reg, err := ja.authRegistry.Get(network)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 	conf := &oauth2.Config{
 		ClientID:     reg.ClientId,
@@ -105,42 +104,42 @@ func (ja *jwtAuthorizer) auth(network, code, redirectUrl string) (*auth.AuthUser
 	}
 	tok, err := conf.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
-	tokval, err := json.Marshal(tok)
-	if err != nil {
-		return nil, "", err
-	}
+	atok := make(auth.Token)
+	atok["access_token"] = tok.AccessToken
+	atok["token_type"] = tok.TokenType
+	atok["refresh_token"] = tok.RefreshToken
+	atok["expires_in"] = strconv.Itoa(int(tok.Expiry.Sub(time.Now()).Seconds()))
 	client := conf.Client(oauth2.NoContext, tok)
 	rsp, err := client.Get(reg.UserinfoUrl)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
 	dat, err := parse(rsp.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	var res auth.AuthUser
-	log.Printf("data: %#v", dat)
 	v, err := getValue(reg.PathId, dat)
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot get email: %s", err)
+		return nil, nil, fmt.Errorf("cannot get email: %s", err)
 	} else {
 		res.Uid = v
 	}
 	v, err = getValue(reg.PathName, dat)
 	if err != nil {
-		return nil, "", fmt.Errorf("cannot get name: %s", err)
+		return nil, nil, fmt.Errorf("cannot get name: %s", err)
 	} else {
 		res.Name = v
 	}
 	if reg.PathCover != "" {
 		v, err = getValue(reg.PathCover, dat)
 		if err != nil {
-			return nil, "", fmt.Errorf("cannot get cover: %s", err)
+			return nil, nil, fmt.Errorf("cannot get cover: %s", err)
 		} else {
 			res.BackgroundUrl = v
 		}
@@ -148,12 +147,12 @@ func (ja *jwtAuthorizer) auth(network, code, redirectUrl string) (*auth.AuthUser
 	if reg.PathPicture != "" {
 		v, err = getValue(reg.PathPicture, dat)
 		if err != nil {
-			return nil, "", fmt.Errorf("cannot get picture: %s", err)
+			return nil, nil, fmt.Errorf("cannot get picture: %s", err)
 		} else {
 			res.ThumbnailUrl = v
 		}
 	}
-	return &res, string(tokval), nil
+	return &res, atok, nil
 }
 
 func parse(r io.Reader) (map[string]interface{}, error) {
@@ -195,6 +194,5 @@ func getSimpleValue(v string, data map[string]interface{}) (interface{}, error) 
 		res := data[key].([]interface{})
 		return res[indx], nil
 	}
-	log.Printf("return value %v\n", data[v])
 	return data[v], nil
 }

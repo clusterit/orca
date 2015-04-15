@@ -34,6 +34,10 @@
                   {{label}}
                 </paper-item>
               </template>
+              <paper-item  on-tap="{{logout}}">
+                <core-icon class="menuicon" icon="exit-to-app"></core-icon>
+                Logout
+              </paper-item>
             </template>
           </core-menu>
         </core-header-panel>
@@ -46,7 +50,7 @@
           </div>
         </div></div>
         <div fit>
-          <core-pages fit valueattr="id" selected="{{menuItems[appPage].target}}">
+          <core-pages fit valueattr="id" selected="{{menuItems[appPage].target}}" id="appPages">
             <div id="settingspage" layout vertical fit>
               <paper-tabs selected="{{datatab}}" id="settingstabs">
                 <paper-tab>Account</paper-tab>
@@ -131,8 +135,17 @@
       userLoaded : function (rsp, detail) {
         this.userdetails = detail.response;
         this.page = "mainpage";
+        this.appPage = 0;
         this.$.settingstabs.updateBar();
-        //this.appPage = 0;
+      },
+      logout : function () {
+        this.appPage = 0;
+        this.user = null;
+        this.userdetails = null;
+        this.username = null;
+        this.token = null;
+        this.page = "loginpage";
+        this.$.login.logout();
       },
       userNotLoadable : function (rsp, detail) {
         this.showError("Userdata cannot be loaded: "+detail.response.response.error);
