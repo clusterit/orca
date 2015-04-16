@@ -189,6 +189,7 @@
         var e = evt.target.templateInstance.model.model;
         this.$.uid.value = e.id;
         this.$.name.value = e.name;
+        this.$.usernetwork.value = "";
         var isman = false;
         for (var i=0; i<e.roles.length; i++) {
           if (e.roles[i] == "MANAGER") {
