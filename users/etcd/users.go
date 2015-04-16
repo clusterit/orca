@@ -12,6 +12,7 @@ import (
 
 const (
 	usersPath  = "/users"
+	aliasPath  = "/alias"
 	keysPath   = "/keys"
 	permitPath = "/permit"
 )
@@ -20,6 +21,7 @@ type etcdUsers struct {
 	up etcd.Persister
 	kp etcd.Persister
 	pm etcd.Persister
+	al etcd.Persister
 }
 
 func New(cl *etcd.Cluster) (Users, error) {
@@ -35,23 +37,70 @@ func New(cl *etcd.Cluster) (Users, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &etcdUsers{up: up, kp: kp, pm: pm}, nil
+	al, e := cl.NewJsonPersister("/data" + aliasPath)
+	if e != nil {
+		return nil, e
+	}
+	return &etcdUsers{up: up, kp: kp, pm: pm, al: al}, nil
 }
 
 func (eu *etcdUsers) key(k *Key) string {
 	return strings.Replace(k.Fingerprint, ":", "", -1)
 }
 
-func (eu *etcdUsers) Create(id, name string, rlz Roles) (*User, error) {
+func uid(net, id string) string {
+	return common.NetworkUser(net, id)
+}
+
+func (eu *etcdUsers) RemoveAlias(id, network, alias string) (*User, error) {
 	u, e := eu.Get(id)
 	if e != nil {
-		u = &User{Id: id, Name: name, Roles: rlz}
+		return nil, e
+	}
+	auid := uid(network, alias)
+	u.Aliases = remove(auid, u.Aliases)
+	if err := eu.al.Remove(auid); err != nil {
+		return nil, err
+	}
+	return u, eu.up.Put(u.Id, u)
+}
+
+func (eu *etcdUsers) AddAlias(id, network, alias string) (*User, error) {
+	u, e := eu.Get(id)
+	if e != nil {
+		return nil, e
+	}
+	auid := uid(network, alias)
+	u.Aliases = insert(auid, u.Aliases)
+	if err := eu.al.Put(auid, u.Id); err != nil {
+		return nil, err
+	}
+	return u, eu.up.Put(u.Id, u)
+}
+
+func (eu *etcdUsers) Create(network, id, name string, rlz Roles) (*User, error) {
+	usrid := id
+	if network != "" {
+		usrid = uid(network, id)
+	}
+	u, e := eu.Get(usrid)
+	if e != nil {
+		internalid := common.GenerateUUID()
+		u = &User{Id: internalid, Name: name, Roles: rlz, Aliases: []string{usrid}}
+		// generate an alias for internalid too
+		if err := eu.al.Put(internalid, internalid); err != nil {
+			return nil, err
+		}
 	} else {
 		u.Name = name
 		u.Roles = rlz
 		u.Allowance = nil
+		u.Aliases = insert(usrid, u.Aliases)
 	}
-	return u, eu.up.Put(id, u)
+	if err := eu.al.Put(usrid, u.Id); err != nil {
+		return nil, err
+	}
+	return u, eu.up.Put(u.Id, u)
 }
 
 func (eu *etcdUsers) GetAll() ([]User, error) {
@@ -62,10 +111,16 @@ func (eu *etcdUsers) GetAll() ([]User, error) {
 func (eu *etcdUsers) Get(id string) (*User, error) {
 	var u User
 	var a Allowance
-	if err := eu.up.Get(id, &u); err != nil {
+	var realid string
+	// we have an alias for our intenal id too, so the
+	// next lookup must always succeed if the user exists
+	if err := eu.al.Get(id, &realid); err != nil {
 		return nil, err
 	}
-	if err := eu.pm.Get(id, &a); err == nil {
+	if err := eu.up.Get(realid, &u); err != nil {
+		return nil, err
+	}
+	if err := eu.pm.Get(realid, &a); err == nil {
 		u.Allowance = &a
 	}
 	return &u, nil
@@ -166,4 +221,30 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 
 func (eu *etcdUsers) Close() error {
 	return nil
+}
+
+func insert(s string, ar []string) []string {
+	m := make(map[string]bool)
+	for _, a := range ar {
+		m[a] = true
+	}
+	m[s] = true
+	var res []string
+	for k, _ := range m {
+		res = append(res, k)
+	}
+	return res
+}
+
+func remove(s string, ar []string) []string {
+	m := make(map[string]bool)
+	for _, a := range ar {
+		m[a] = true
+	}
+	delete(m, s)
+	var res []string
+	for k, _ := range m {
+		res = append(res, k)
+	}
+	return res
 }

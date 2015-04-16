@@ -13,6 +13,7 @@ import (
 // An AuthUser is a Uid and a Name. The BackgroundUrl
 // and the ThumbnailUrl is optional an can be empty
 type AuthUser struct {
+	Network       string `json:"network"`
 	Uid           string `json:"uid"`
 	Name          string `json:"name"`
 	BackgroundUrl string `json:"backgroundurl"`

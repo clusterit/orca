@@ -85,7 +85,7 @@
     <core-ajax
       id="userloader"
       method="GET"
-      url="/api/users/{{user.uid}}"
+      url="/api/users/me"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{userNotLoadable}}"
@@ -108,6 +108,7 @@
       user : null,
       config : null,
       datatab : 0,
+      network : "",
       zone : "",
 
       menuItems : [
@@ -169,6 +170,7 @@
         this.user = u.data;
         this.username = u.data.name;
         this.token = u.data.token;
+        this.network = u.data.network;
         this.$.userloader.go();
       },
       userRefresh : function () {

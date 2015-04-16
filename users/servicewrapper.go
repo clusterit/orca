@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/clusterit/orca/auth"
+	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/rest"
 	"gopkg.in/emicklei/go-restful.v1"
 )
@@ -23,7 +24,7 @@ func HasRoles(wrap UserFunction, ath auth.Auther, usrs Users, rlz Roles) restful
 			return
 		}
 
-		hasroles, u, err := hasAuthorizedRoles(a.Uid, usrs, rlz)
+		hasroles, u, err := hasAuthorizedRoles(a.Network, a.Uid, usrs, rlz)
 		if err != nil || !hasroles {
 			response.WriteError(http.StatusForbidden, rest.JsonError("not allowed"))
 			return
@@ -36,8 +37,8 @@ func HasRoles(wrap UserFunction, ath auth.Auther, usrs Users, rlz Roles) restful
 // at least one of the given roles. Returns true if the user has one of
 // the given roles, otherwise false. Note: A return value of false does not
 // imply an error!
-func hasAuthorizedRoles(uid string, usrs Users, rlz Roles) (bool, *User, error) {
-	u, err := usrs.Get(uid)
+func hasAuthorizedRoles(network, uid string, usrs Users, rlz Roles) (bool, *User, error) {
+	u, err := usrs.Get(common.NetworkUser(network, uid))
 	if err != nil {
 		return false, nil, err
 	}

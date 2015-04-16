@@ -16,7 +16,7 @@ type basicAuther struct {
 }
 
 // taken from the stdlib
-func parseBasicAuth(token string) (username, password string, ok bool) {
+func parseBasicAuth(token string) (network, username, password string, ok bool) {
 	if !strings.HasPrefix(token, "Basic ") {
 		return
 	}
@@ -29,10 +29,11 @@ func parseBasicAuth(token string) (username, password string, ok bool) {
 	if s < 0 {
 		return
 	}
-	return cs[:s], cs[s+1:], true
+	userpass := strings.Split(cs[s+1:], ":")
+	return cs[:s], userpass[0], userpass[1], true
 }
 
-func (g *basicAuther) check(url string, user, pwd string) error {
+func (g *basicAuther) check(url, net, user, pwd string) error {
 	if url == "" { // assume no check wanted
 		return nil
 	}
@@ -60,12 +61,13 @@ func (g *basicAuther) Get(token string) (*auth.AuthUser, error) {
 	// if there is no correct Basic-Auth-Header we simply use "" als user/password
 	// to check against the backend. if this succeeds, we assume that there is no
 	// auth needed
-	u, p, _ := parseBasicAuth(token)
-	err := g.check(g.httpUrl, u, p)
+	network, u, p, _ := parseBasicAuth(token)
+	err := g.check(g.httpUrl, network, u, p)
 	if err == nil {
 		u := auth.AuthUser{
-			Uid:  u,
-			Name: u,
+			Uid:     u,
+			Network: network,
+			Name:    u,
 		}
 		return &u, nil
 	}

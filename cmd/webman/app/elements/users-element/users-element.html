@@ -32,6 +32,7 @@
             <div layout vertical flex on-tap="{{editUser}}">
               <div class="userid">{{model.id}}</div>
               <div class="username">{{model.name}}</div>
+              <div class="username">[ {{model.aliases}} ]</div>
             </div>
             <template if="{{isManager(model)}}">
               <core-icon icon="star" style="color:#FDD835"></core-icon>
@@ -47,8 +48,9 @@
       <paper-fab id="adduser" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
 
       <paper-dialog backdrop id="adduserdialog" heading="Add/Update User" >
+        <div><paper-input label="User Network" id="usernetwork"></paper-input></div>
         <div><paper-input label="User ID" id="uid"></paper-input></div>
-        <div><paper-input label="User name" id="name"></paper-input></div>
+        <div><paper-input label="User Name" id="name"></paper-input></div>
         <div layout horizontal center >
           <div >Manager</div>
           <paper-toggle-button id="cbmanager" style="padding:10px"></paper-toggle-button>
@@ -72,7 +74,7 @@
     <core-ajax
       id="userscreator"
       method="PUT"
-      url="/api/users"
+      url="/api/users/{{network}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -94,6 +96,7 @@
       users : [],
       colors : ["red","green","blue","yellow","magenta","aqua"],
       removeuser : "",
+      network : "",
 
       ready : function () {
 
@@ -124,6 +127,7 @@
       showAddDialog : function () {
         this.$.uid.value = "";
         this.$.name.value = "";
+        this.$.usernetwork.value = "";
         this.$.cbmanager.checked = false;
         this.$.adduserdialog.toggle();
       },
@@ -137,6 +141,8 @@
           keys : [],
           roles : roles
         };
+        this.network = this.$.usernetwork.value;
+        if (!this.network) this.network = "orca";
         this.$.userscreator.xhrArgs = {
           body : JSON.stringify(usr)
         };

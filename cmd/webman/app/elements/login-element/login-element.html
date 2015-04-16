@@ -18,6 +18,7 @@
       url="/api/auth/user"
       headers='{"Authorization":"{{orcaToken}}"}'
       handleAs="json"
+      on-core-error="{{logout}}"
       on-core-response="{{storeToken}}"></core-ajax>
     <core-ajax
       auto
@@ -86,6 +87,7 @@
       storeToken : function (r,det) {
         var data = det.response;
         data.token = this.orcaToken;
+        data.network = this.network;
         this.fire("login", {data:data});
       },
       logout : function () {

@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	OrcaPrefix     = "orca"
 	ManagerService = "/userFetchService"
 )
 

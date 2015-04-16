@@ -155,9 +155,10 @@ func NewCLIManager(etcds []string) (*climanager, error) {
 
 	if len(managers) > 0 {
 		for _, m := range managers {
+			aliasedName := strings.Split(m, ":")
 			u, e := userimpl.Get(m)
 			if e != nil {
-				_, err := userimpl.Create(m, m, users.ManagerRoles)
+				_, err := userimpl.Create(aliasedName[0], aliasedName[1], aliasedName[1], users.ManagerRoles)
 				if err != nil {
 					logger.Errorf("cannot create manager user '%s': %s", m, err)
 					continue

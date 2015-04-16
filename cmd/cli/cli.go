@@ -25,13 +25,13 @@ func (c *cli) unmarshal(rq *napping.Request, target interface{}) error {
 	return nil
 }
 
-func (c *cli) createUser(id, name string, roles ...string) error {
+func (c *cli) createUser(network, id, name string, roles ...string) error {
 	rlz := make([]users.Role, len(roles))
 	for i, r := range roles {
 		rlz[i] = users.Role(r)
 	}
 	t := users.User{Id: id, Name: name, Roles: rlz}
-	r := c.rq("PUT", "/api/users", t)
+	r := c.rq("PUT", "/api/users/"+network, t)
 	return c.unmarshal(r, nil)
 }
 
@@ -99,5 +99,14 @@ func (c *cli) putProvider(p oauth.OauthRegistration) error {
 }
 func (c *cli) delProvider(n string) error {
 	r := c.rq("DELETE", "/api/authregistry/"+n, nil)
+	return c.unmarshal(r, nil)
+}
+
+func (c *cli) addAlias(uid, network, alias string) error {
+	r := c.rq("PUT", "/api/users/alias/"+uid+"/"+network+"/"+alias, nil)
+	return c.unmarshal(r, nil)
+}
+func (c *cli) removeAlias(uid, network, alias string) error {
+	r := c.rq("DELETE", "/api/users/alias/"+uid+"/"+network+"/"+alias, nil)
 	return c.unmarshal(r, nil)
 }

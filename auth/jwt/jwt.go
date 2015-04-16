@@ -82,6 +82,7 @@ func (ja *jwtAuthorizer) Get(token string) (*auth.AuthUser, error) {
 	var a auth.AuthUser
 	a.Uid = ath["uid"].(string)
 	a.Name = ath["name"].(string)
+	a.Network = ath["network"].(string)
 	a.BackgroundUrl = ath["backgroundurl"].(string)
 	a.ThumbnailUrl = ath["thumbnail"].(string)
 	return &a, nil
@@ -124,6 +125,7 @@ func (ja *jwtAuthorizer) auth(network, code, redirectUrl string) (*auth.AuthUser
 	}
 
 	var res auth.AuthUser
+	res.Network = network
 	v, err := getValue(reg.PathId, dat)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot get email: %s", err)

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/clusterit/orca/cmd"
+	"github.com/clusterit/orca/common"
 	"github.com/howeyc/gopass"
 	"github.com/jmcvetta/napping"
 	"github.com/spf13/cobra"
@@ -70,7 +70,7 @@ func main() {
 
 	cli.AddCommand(usercmd, keycmd, zones, gateway, oauthCmd)
 
-	viper.SetEnvPrefix(cmd.OrcaPrefix)
+	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
 	viper.BindPFlag("user", cli.Flag("user"))
 	cli.Execute()

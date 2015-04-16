@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/clusterit/orca/auth"
+	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/rest"
 	"gopkg.in/emicklei/go-restful.v1"
 )
@@ -50,18 +51,32 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 
-	ws.Route(ws.PUT("").To(manager(t.createUser)).
+	ws.Route(ws.PUT("/{network}").To(manager(t.createUser)).
 		Doc("create a user").
 		Operation("createUser").
+		Param(ws.PathParameter("network", "identifier the provider for the user").DataType("string")).
 		Reads(User{}).
+		Writes(User{}))
+	ws.Route(ws.PUT("/alias/{user-id}/{network}/{alias}").To(userRoles(t.addAlias)).
+		Doc("add an alias to user").
+		Operation("add Alias").
+		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
+		Param(ws.PathParameter("network", "identifier the provider for the alias").DataType("string")).
+		Param(ws.PathParameter("alias", "identifier of the alias").DataType("string")).
+		Writes(User{}))
+	ws.Route(ws.DELETE("/alias/{user-id}/{network}/{alias}").To(userRoles(t.removeAlias)).
+		Doc("remove an alias from a user").
+		Operation("remove Alias").
+		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
+		Param(ws.PathParameter("network", "identifier the provider for the alias").DataType("string")).
+		Param(ws.PathParameter("alias", "identifier of the alias").DataType("string")).
 		Writes(User{}))
 	ws.Route(ws.GET("/").To(manager(t.getAll)).
 		Doc("get all registered users").
 		Operation("getAll").
 		Returns(200, "OK", []User{}))
-	ws.Route(ws.GET("/{user-id}").To(userRoles(t.getUser)).
-		Doc("retrieves the given user").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
+	ws.Route(ws.GET("/me").To(userRoles(t.getUser)).
+		Doc("retrieves the current authenticated user").
 		Operation("getUser").
 		Returns(200, "OK", User{}))
 	ws.Route(ws.DELETE("/{user-id}").To(userRoles(t.deleteUser)).
@@ -127,9 +142,20 @@ func (t *UsersService) createUser(me *User, request *restful.Request, response *
 		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	res, err := t.Provider.Create(u.Id, u.Name, u.Roles)
+	network := request.PathParameter("network")
+	if network == common.OrcaPrefix {
+		// we have an internal ID, do update
+		usr, e := t.Provider.Get(u.Id)
+		if e != nil {
+			rest.HandleError(e, response)
+			return
+		}
+		u.Id = usr.Id
+		network = ""
+	}
+	res, err := t.Provider.Create(network, u.Id, u.Name, u.Roles)
 	if err != nil {
-		response.WriteError(http.StatusInternalServerError, err)
+		rest.HandleError(err, response)
 		return
 	}
 	response.WriteEntity(res)
@@ -140,11 +166,7 @@ func (t *UsersService) getAll(me *User, request *restful.Request, response *rest
 }
 
 func (t *UsersService) getUser(u *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
-	if !allowed(u, uid, response) {
-		return
-	}
-	rest.HandleEntity(t.Provider.Get(uid))(request, response)
+	response.WriteEntity(*u)
 }
 
 func (t *UsersService) deleteUser(me *User, request *restful.Request, response *restful.Response) {
@@ -227,17 +249,31 @@ func (t *UsersService) deleteUserKey(me *User, request *restful.Request, respons
 	}
 	k, err := t.Provider.RemoveKey(zone, uid, kid)
 	if err != nil {
-		response.WriteError(http.StatusInternalServerError, err)
+		rest.HandleError(err, response)
 		return
 	}
 	response.WriteEntity(k)
+}
+
+func (t *UsersService) addAlias(me *User, request *restful.Request, response *restful.Response) {
+	uid := request.PathParameter("user-id")
+	alias := request.PathParameter("alias")
+	network := request.PathParameter("network")
+	rest.HandleEntity(t.Provider.AddAlias(uid, network, alias))(request, response)
+}
+
+func (t *UsersService) removeAlias(me *User, request *restful.Request, response *restful.Response) {
+	uid := request.PathParameter("user-id")
+	alias := request.PathParameter("alias")
+	network := request.PathParameter("network")
+	rest.HandleEntity(t.Provider.RemoveAlias(uid, network, alias))(request, response)
 }
 
 func (t *UsersService) parseKey(me *User, request *restful.Request, response *restful.Response) {
 	var pubk string
 	err := request.ReadEntity(&pubk)
 	if err != nil {
-		response.WriteError(http.StatusInternalServerError, err)
+		rest.HandleError(err, response)
 		return
 	}
 	rest.HandleEntity(ParseKey(string(pubk)))(request, response)

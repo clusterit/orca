@@ -31,6 +31,11 @@
   font-style: italic;
   font-size: 0.9em;
 }
+.useraliases {
+  font-style: italic;
+  font-size: 0.9em;
+  font-family: monospace;
+}
 #adduser {
   position: absolute;
   bottom: 20px;

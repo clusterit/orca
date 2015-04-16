@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/logutils"
 
 	"github.com/clusterit/orca/cmd"
+	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/etcd"
 	"github.com/clusterit/orca/logging"
@@ -33,7 +34,7 @@ var (
 )
 
 func init() {
-	viper.SetEnvPrefix(cmd.OrcaPrefix)
+	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
 	viper.SetDefault("bind", ":2222")
 	viper.SetDefault("etcd", "http://localhost:4001")

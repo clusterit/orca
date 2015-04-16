@@ -27,6 +27,7 @@ type User struct {
 	Name      string     `json:"name"`
 	Keys      []Key      `json:"keys"`
 	Roles     Roles      `json:"roles"`
+	Aliases   []string   `json:"aliases"`
 	Allowance *Allowance `json:"allowance,omitempty"`
 }
 
@@ -43,7 +44,9 @@ type Allowance struct {
 }
 
 type Users interface {
-	Create(id, name string, rolzs Roles) (*User, error)
+	Create(network, id, name string, rolzs Roles) (*User, error)
+	AddAlias(id, network, alias string) (*User, error)
+	RemoveAlias(id, network, alias string) (*User, error)
 	GetAll() ([]User, error)
 	Get(id string) (*User, error)
 	GetByKey(zone string, pubkey string) (*User, *Key, error)
