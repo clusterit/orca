@@ -47,7 +47,7 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 
 	ws := new(restful.WebService)
 	ws.
-		Path(root + "/users").
+		Path(root + "users").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 

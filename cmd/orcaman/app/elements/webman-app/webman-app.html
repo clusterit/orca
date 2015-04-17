@@ -7,14 +7,14 @@
 <link rel="import" href="../webman-element/webman-element.html">
 <link rel="import" href="../oauth-registration/oauth-registration.html">
 
-<polymer-element name="webman-app" flex layout vertical >
+<polymer-element name="webman-app" flex layout vertical attributes="apiBase" >
   <template>
     <link rel="stylesheet" href="webman-app.css">
     <core-pages valueattr="id" selected="{{page}}" flex>
       <div horizontal layout flex id="loginpage">
         <div flex self-center>
           <div horizontal center-justified layout>
-            <div><login-element id="login" on-login="{{handleLoggedIn}}" config="{{config}}"></login-element></div>
+            <div><login-element apiBase="{{apiBase}}" id="login" on-login="{{handleLoggedIn}}" config="{{config}}"></login-element></div>
           </div>
         </div>
       </div>
@@ -57,21 +57,21 @@
                 <paper-tab>Keys</paper-tab>
               </paper-tabs>
               <core-pages selected="{{datatab}}" flex on-core-select="{{datatabSelected}}">
-                <settings-element on-error="{{displayError}}" user="{{user}}" details="{{userdetails}}" on-allowed="{{userRefresh}}"></settings-element>
-                <keys-element zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
+                <settings-element apiBase="{{apiBase}}" on-error="{{displayError}}" user="{{user}}" details="{{userdetails}}" on-allowed="{{userRefresh}}"></settings-element>
+                <keys-element apiBase="{{apiBase}}" zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
               </core-pages>
             </div>
             <div id="users" fit>
-              <users-element fit user="{{user}}" on-error="{{displayError}}" zone="{{zone}}"></users-element>
+              <users-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}" zone="{{zone}}"></users-element>
             </div>
             <div id="gateway" fit>
-              <gateway-element fit user="{{user}}" on-error="{{displayError}}"></gateway-element>
+              <gateway-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></gateway-element>
             </div>
             <div id="webman" fit>
-              <webman-element fit user="{{user}}" on-error="{{displayError}}"></webman-element>
+              <webman-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></webman-element>
             </div>
             <div id="oauth" fit>
-              <oauth-registration fit user="{{user}}" on-error="{{displayError}}"></oauth-registration>
+              <oauth-registration apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></oauth-registration>
             </div>
           </core-pages>
         </div>
@@ -85,7 +85,7 @@
     <core-ajax
       id="userloader"
       method="GET"
-      url="/api/users/me"
+      url="{{apiBase}}/users/me"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{userNotLoadable}}"
@@ -94,7 +94,7 @@
       id="stageloader"
       method="GET"
       auto
-      url="/api/configuration/zone"
+      url="{{apiBase}}/configuration/zone"
       handleAs="json"
       response="{{zone}}"></core-ajax>
   </template>

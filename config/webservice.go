@@ -24,7 +24,7 @@ func (t *ConfigService) Register(root string, c *restful.Container) {
 	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles)
 
 	ws.
-		Path(root + "/configuration").
+		Path(root + "configuration").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 

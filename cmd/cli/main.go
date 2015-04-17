@@ -63,7 +63,7 @@ func newCli() *cli {
 func main() {
 
 	var cli = &cobra.Command{Use: "cli"}
-	cli.PersistentFlags().StringVarP(&serviceUrl, "service", "s", "http://localhost:9010", "the service url of climan")
+	cli.PersistentFlags().StringVarP(&serviceUrl, "service", "s", "http://localhost:9011", "the service url of climan")
 	cli.PersistentFlags().StringVarP(&user, "user", "u", "", "the username to use for the connection")
 	cli.PersistentFlags().BoolVarP(&password, "password", "p", false, "prompt for a password if set. Environment variable ORCA_PASSWORD overwrites this")
 	cli.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug output of the HTTP flow")

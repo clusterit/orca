@@ -64,7 +64,7 @@ func (t *AutherService) Shutdown() error {
 func (t *AutherService) Register(root string, c *restful.Container) {
 	ws := new(restful.WebService)
 	ws.
-		Path(root + "/auth").
+		Path(root + "auth").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 

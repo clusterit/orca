@@ -1,47 +1,47 @@
 <link rel="import" href="../elements.html">
-<link rel="import" href="gateway-zone.html">
+<link rel="import" href="webman-zone.html">
 
-<polymer-element name="gateway-element" attributes="user" layout vertical>
+<polymer-element name="webman-element" attributes="user apiBase" layout vertical>
   <template>
-    <link rel="stylesheet" href="gateway-element.css">
+    <link rel="stylesheet" href="webman-element.css">
 
     <paper-tabs selected="{{configtab}}" id="configtabs" on-core-activate="{{tabSelected}}">
-      <template repeat="{{z in zones}}">
-        <paper-tab>[{{z}}]</paper-tab>
+      <template repeat="{{s in zones}}">
+        <paper-tab>[{{s}}]</paper-tab>
       </template>
     </paper-tabs>
     <core-pages selected="{{configtab}}" flex >
       <template repeat="{{s,index in zones}}">
-        <gateway-zone flex id="config_{{index}}"></gateway-zone>
+        <webman-zone flex id="config_{{index}}"></webman-zone>
       </template>
     </core-pages>
 
     <core-ajax
       id="zonesloader"
       method="GET"
-      url="/api/configuration/zones"
+      url="{{apiBase}}/configuration/zones"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-error="{{showError}}"
       on-core-response="{{zonesLoaded}}"></core-ajax>
     <core-ajax
-      id="gatewaysaver"
+      id="mcsaver"
       method="PUT"
-      url="/api/configuration/{{zone}}/gateway"
+      url="{{apiBase}}/configuration/{{zone}}/mgrConfig"
       headers='{"Authorization":"{{user.token}}"}'
       contentType="application/json"
       handleAs="json"
       on-core-error="{{showError}}"
-      on-core-response="{{gatewaySaved}}"></core-ajax>
+      on-core-response="{{mcSaved}}"></core-ajax>
     <core-ajax
-      id="gatewayloader"
+      id="mcloader"
       method="GET"
-      url="/api/configuration/{{zone}}/gateway"
+      url="{{apiBase}}/configuration/{{zone}}/mgrConfig"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       contentType="application/json"
       on-core-error="{{showError}}"
-      on-core-response="{{gatewayLoaded}}"></core-ajax>
+      on-core-response="{{mcLoaded}}"></core-ajax>
   </template>
   <script>
     Polymer({
@@ -63,34 +63,34 @@
       },
       doSave : function () {
         var t = this.getTab();
-        var gw = {
-          hostkey : t.hostkey,
-          loglevel : t.loglevel,
-          checkallow: t.forcecheck
+        var k = {
+          key : t.jwtkey,
+          authUrl : t.authurl,
+          verifyCert : t.verifycert
         };
-        this.$.gatewaysaver.xhrArgs = {
-          body : JSON.stringify(gw)
+        this.$.mcsaver.xhrArgs = {
+          body : JSON.stringify(k)
         };
-        this.$.gatewaysaver.go();
+        this.$.mcsaver.go();
       },
       zonesLoaded : function (rsp, det) {
         this.zones = det.response;
         this.zone = this.zones[this.configtab];
-        this.$.gatewayloader.go();
+        this.$.mcloader.go();
       },
-      gatewaySaved : function (rsp, det) {
+      mcSaved : function (rsp, det) {
         console.log("gateway saved:" , rsp, det);
       },
-      gatewayLoaded : function (rsp, det) {
+      mcLoaded : function (rsp, det) {
         var dat = det.response;
         var t = this.getTab();
-        t.loglevel = dat.loglevel;
-        t.forcecheck = dat.checkAllow;
-        t.updateText(dat.hostkey);
+        t.authurl = dat.authUrl;
+        t.verifycert = dat.verifyCert;
+        t.updateText(dat.key);
       },
       tabSelected : function (evt, det) {
         this.zone = this.zones[this.configtab];
-        this.$.gatewayloader.go();
+        this.$.mcloader.go();
       }
     });
   </script>

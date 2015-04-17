@@ -111,7 +111,7 @@ func (t *AuthRegService) Register(root string, c *restful.Container) {
 
 	ws := new(restful.WebService)
 	ws.
-		Path(root + "/authregistry").
+		Path(root + "authregistry").
 		Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON)
 

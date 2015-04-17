@@ -60,7 +60,6 @@ var listUsers = &cobra.Command{
 		c := newCli()
 		usrs, err := c.listUsers()
 		exitWhenError(err)
-		fmt.Printf("%-20s %-20s %-40s\n", "Uid", "Name", "Roles")
 		for _, u := range usrs {
 			spew.Dump(u)
 		}

@@ -1,6 +1,6 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="keys-element" attributes="details token zone">
+<polymer-element name="keys-element" attributes="details token zone apiBase">
   <template>
     <link rel="stylesheet" href="keys-element.css" >
 
@@ -23,7 +23,7 @@
     <core-ajax
       id="keysaver"
       method="PUT"
-      url="/api/users/{{details.id}}/{{newkeyid}}/{{zone}}/pubkey"
+      url="{{apiBase}}/users/{{details.id}}/{{newkeyid}}/{{zone}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -31,7 +31,7 @@
     <core-ajax
       id="keydeleter"
       method="DELETE"
-      url="/api/users/{{details.id}}/{{removekey}}/{{zone}}/pubkey"
+      url="{{apiBase}}/users/{{details.id}}/{{removekey}}/{{zone}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -39,7 +39,7 @@
     <core-ajax
       id="keyparser"
       method="POST"
-      url="/api/users/parsekey"
+      url="{{apiBase}}/users/parsekey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"

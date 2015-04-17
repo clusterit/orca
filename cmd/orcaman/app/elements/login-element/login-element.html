@@ -1,6 +1,6 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="login-element" >
+<polymer-element name="login-element" attributes="apiBase">
   <template>
     <link rel="stylesheet" href="login-element.css">
     <template repeat="{{p in providers}}">
@@ -15,7 +15,7 @@
     <core-ajax
       id="authuser"
       method="GET"
-      url="/api/auth/user"
+      url="{{apiBase}}/auth/user"
       headers='{"Authorization":"{{orcaToken}}"}'
       handleAs="json"
       on-core-error="{{logout}}"
@@ -24,7 +24,7 @@
       auto
       id="loadregs"
       method="GET"
-      url="/api/authregistry/loginProviders"
+      url="{{apiBase}}/authregistry/loginProviders"
       handleAs="json"
       contentType="application/json"
       on-core-response="{{oauthProviders}}"
@@ -39,6 +39,7 @@
       providers : [],
       providerMap : {},
       orcaToken : "",
+      apiBase : "",
       icons : {
         "google" : "/images/googleplus.png",
         "github" : "/images/github.png",
@@ -75,7 +76,7 @@
         hello.init (rq, {
           redirect_uri : "redirect.html",
           response_type : 'code',
-          oauth_proxy : '/api/auth/oauth',
+          oauth_proxy : this.apiBase+'/auth/oauth',
           force : false,
           scope: p.scopes
         });
