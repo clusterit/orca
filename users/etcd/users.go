@@ -202,6 +202,9 @@ func (eu *etcdUsers) Update(uid, username string, rolz Roles) (*User, error) {
 }
 
 func (eu *etcdUsers) Permit(a Allowance, ttlSecs uint64) error {
+	if ttlSecs == 0 {
+		return eu.pm.Remove(a.Uid)
+	}
 	return eu.pm.PutTtl(a.Uid, ttlSecs, &a)
 }
 

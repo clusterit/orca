@@ -13,6 +13,7 @@
       </template>
       <div id="loginlabel">Allow Login for the next ...</div>
       <div layout horiztontal center-justified>
+        <paper-button raised class="white" on-tap="{{allow}}" data-value="0">0</paper-button>
         <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
         <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
         <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
@@ -23,7 +24,7 @@
     <core-ajax
       id="allowance"
       method="PATCH"
-      url="{{apiBase}}/users/{{user.uid}}/permit/{{duration}}"
+      url="{{apiBase}}/users/{{details.id}}/permit/{{duration}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{userAllowed}}"></core-ajax>
