@@ -32,7 +32,7 @@ It is really simple to use. First of all you must have a SSH key pair and your
 client must have a running `ssh-agent` with the private key loaded. Second, your 
 public key must be installed in the `authorized_keys` of your targeted backend 
 servers. If you don't implement your own key store, you have to upload your 
-public key to the `orca` keystore. This can be done with `webman` a simple 
+public key to the `orca` keystore. This can be done with `orcaman` a simple 
 webtool which uses OpenID Connect (OAuth2 for Login) to authenticate the user. 
 If this is successful and the user was already authorized for the use of `orca` 
 he can now upload his public keys.
@@ -59,26 +59,25 @@ a specific duration.
 After the permission to login to the gateway is granted, the request will be forwarded to the
 referenced backend server with current `ssh-agent` provided keys. 
 
-### WebMan
-The `webman` is a HTML5 app which can be used to store keys inside `etcd` and to request an
-*Allowance* for a specific time. If you have the **MANAGER** role you can also register new
-users and change some other settings. The `webman` also implements the `UserByKey` REST endpoint
-which is needed by the gateway. If you start `webman` with a *publish address* it registeres
+### OrcaMan
+The `orcaman` provides Rest-Services and an embedded HTML5 app. This application can be used 
+to store keys inside `etcd` and to request an*Allowance* for a specific time. If you have 
+the **MANAGER** role you can also register new users and change some other settings. 
+The `orcaman` also implements the `UserByKey` REST endpoint
+which is needed by the gateway. If you start `orcaman` with a *publish address* it registeres
 itself within a wellknown key inside of `etcd` so it will be discoverable by the gateway. After
-stopping or crashing `webman` it will deregister automatically.
+stopping or crashing `orcaman` it will deregister automatically.
 
-To secure the REST api, `webman` uses a *JWT* which signs the user data with a RSA key. The
-allowed users for `webman` have to be configured in the `etcd` backbone. The user logs in via
-an Oauth2 Provider (at this time `webman` supports *Google* users, but other OAuth2 providers will
-follow soon) and `webman` checks if the user is allowed to use `orca`.
+To secure the REST api, `orcaman` uses a *JWT* which signs the user data with a RSA key. The
+allowed users for `orcaman` have to be configured in the `etcd` backbone. The user logs in via
+an Oauth2 Provider (at this time `orcaman` supports *Google* users, but other OAuth2 providers will
+follow soon) and `orcaman` checks if the user is allowed to use `orca`.
 
-### CliMan
-`climan` is also a webservice provider. It populates the webservices like `webman` but uses a
-simple *HTTP Basic Auth* backend. You should never bind `climan` on a public available network
-interface; it is intended for command line usage. You should use `climan` to bootstrap your
-user store. You can do a 
-```
-climan manager user.mail@email.com
-```
-to give the user *user.mail@email.com* a **MANAGER** role.
+`orcaman` is also a cli webservice provider. It populates all the webservices with a 
+simple *HTTP Basic Auth* backend. To disable other's to connect to this simple authentication
+you should always put a reverse proxy in front of `orcaman`. You can also start the cli
+services on a different interfaces (`--clilisten ...` so that they can only be used from localhost
+whereas the Oauth-secured endpoints can listen on a public IP.
 
+### Cli
+The cli support some basic commands to manage the system from the command line.

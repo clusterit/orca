@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -34,6 +35,10 @@ var gateway = &cobra.Command{
 	Long:  "dumps the current configuration of the gateway in the given zone or updates the values if options are set",
 	Run: func(cmd *cobra.Command, args []string) {
 		c := newCli()
+		if len(args) < 1 {
+			cmd.Usage()
+			os.Exit(1)
+		}
 		zone := args[0]
 		gw, err := c.getGateway(zone)
 		exitWhenError(err)

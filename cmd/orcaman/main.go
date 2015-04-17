@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/clusterit/orca/cmd"
 	"github.com/clusterit/orca/config"
@@ -29,6 +31,7 @@ const (
 var (
 	etcdConfig string
 	listen     string
+	clilisten  string
 	publish    string
 	zone       string
 	logger     = logging.Simple()
@@ -52,7 +55,11 @@ var cmdAdmins = &cobra.Command{
 	Short: "Set the admin userids",
 	Long:  "Set the admin userids in the configuration backend to enable bootstrapping",
 	Run: func(cm *cobra.Command, args []string) {
-		m, err := newRest(strings.Split(etcdConfig, ","), "", "")
+		cc, cfger, err := connect(etcdConfig)
+		if err != nil {
+			panic(err)
+		}
+		m, err := newRest(cc, cfger, "", "")
 		if err != nil {
 			panic(err)
 		}
@@ -60,32 +67,105 @@ var cmdAdmins = &cobra.Command{
 	},
 }
 
+var cliConfig = &cobra.Command{
+	Use:   "config [# basichAuthUrl] [# verifyCert]",
+	Short: "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
+	Long:  "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
+	Run: func(cm *cobra.Command, args []string) {
+		cc, cfger, err := connect(etcdConfig)
+		if err != nil {
+			panic(err)
+		}
+		m, err := newRest(cc, cfger, "", "")
+		if err != nil {
+			panic(err)
+		}
+		if len(args) < 2 {
+			cm.Help()
+			os.Exit(1)
+		}
+		authurl := args[0]
+		verify, err := strconv.ParseBool(args[1])
+		if err != nil {
+			panic(err)
+		}
+		m.setConfig(zone, authurl, verify)
+	},
+}
 var serve = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the manager to listen on the given address",
 	Long:  "Start the manager service on the given address. ",
-	Run: func(cm *cobra.Command, args []string) {
-		var managers []*restmanager
-		log.Printf("%v, %v", usecli, useweb)
-		if usecli {
-			cmi, err := NewCli(strings.Split(etcdConfig, ","), cmd.PublishAddress(publish, listen, cliRoot))
-			if err != nil {
-				panic(err)
-			}
-			managers = append(managers, cmi)
-		}
-		if useweb {
-			wm, err := NewWeb(strings.Split(etcdConfig, ","), cmd.PublishAddress(publish, listen, webRoot))
-			if err != nil {
-				panic(err)
-			}
-			managers = append(managers, wm)
-		}
-		start(listen, managers)
+	Run: func(*cobra.Command, []string) {
+		serveAll()
 	},
 }
 
-func start(listenAddress string, rm []*restmanager) error {
+func serveAll() {
+	var managers []*restmanager
+	cc, cfger, err := connect(etcdConfig)
+	if err != nil {
+		panic(err)
+	}
+	var cmi, wm *restmanager
+	if usecli {
+		cmi, err = NewCli(cc, cfger, cmd.PublishAddress(publish, listen, cliRoot))
+		if err != nil {
+			panic(err)
+		}
+		managers = append(managers, cmi)
+	}
+	if useweb {
+		wm, err = NewWeb(cc, cfger, cmd.PublishAddress(publish, listen, webRoot))
+		if err != nil {
+			panic(err)
+		}
+		managers = append(managers, wm)
+	}
+	go func() {
+		if err := fetchZoneData(cfger, zone, managers); err != nil {
+			panic(err)
+		} else {
+			// this should never happen, but if it happens, we end
+			logger.Errorf("zone data fetcher ended, ending manager")
+			os.Exit(1)
+		}
+	}()
+	var wg sync.WaitGroup
+	if clilisten == "" {
+		wg.Add(1)
+		go func() {
+			start(listen, managers...)
+			wg.Done()
+		}()
+	} else {
+		wg.Add(1)
+		go func() {
+			start(listen, []*restmanager{wm}...)
+			wg.Done()
+		}()
+		wg.Add(1)
+		go func() {
+			start(clilisten, []*restmanager{cmi}...)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+}
+
+func connect(etcds string) (*etcd.Cluster, config.Configer, error) {
+	cc, err := etcd.Init(strings.Split(etcds, ","))
+	if err != nil {
+		return nil, nil, err
+	}
+	cfger, err := config.New(cc)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cc, cfger, nil
+}
+
+func start(listenAddress string, rm ...*restmanager) error {
 	mux := http.NewServeMux()
 	srv := http.Server{
 		Addr:    listenAddress,
@@ -102,6 +182,26 @@ func start(listenAddress string, rm []*restmanager) error {
 	// todo: add TLS
 	return srv.ListenAndServe()
 
+}
+
+func fetchZoneData(cfger config.Configer, zone string, rms []*restmanager) error {
+	mgr, stp, err := cfger.ManagerConfig(zone)
+	if err != nil {
+		return err
+	}
+	for m := range mgr {
+		logger.Debugf("new manager config: Key:%s", m.Key)
+		for _, rm := range rms {
+			auth, err := rm.switchSettings(m, rm.oauthreg)
+			if err == nil {
+				rm.authimpl = auth
+				rm.usersService.Auth = auth
+				rm.configService.Auth = auth
+			}
+		}
+	}
+	close(stp)
+	return nil
 }
 
 type restmanager struct {
@@ -123,29 +223,21 @@ type restmanager struct {
 	registerUrlMapping func(*http.ServeMux)
 }
 
-func newRest(etcds []string, publishurl string, rooturl string) (*restmanager, error) {
-	cc, err := etcd.Init(etcds)
-	if err != nil {
-		return nil, err
-	}
+func newRest(cc *etcd.Cluster, cfg config.Configer, publishurl string, rooturl string) (*restmanager, error) {
 	userimpl, err := uetcd.New(cc)
 	if err != nil {
 		return nil, err
 	}
 
-	cfger, err := config.New(cc)
-	if err != nil {
-		return nil, err
-	}
 	oauther, err := oauth.New(cc)
 	if err != nil {
 		return nil, err
 	}
 	rm := &restmanager{cluster: cc,
-		configer:   cfger,
 		userimpl:   userimpl,
 		oauthreg:   oauther,
 		publishUrl: publishurl,
+		configer:   cfg,
 		rootUrl:    rooturl,
 	}
 	return rm, nil
@@ -163,23 +255,6 @@ func (rm *restmanager) initWithZone(zone string) error {
 
 	rm.authimpl = auth
 
-	go func() {
-		mgr, stp, err := rm.configer.ManagerConfig(zone)
-		if err != nil {
-			logger.Errorf("cannot create watcher for manger config config: %s", err)
-			return
-		}
-		for m := range mgr {
-			logger.Debugf("new manager config: Key:%s", m.Key)
-			auth, err := rm.switchSettings(m, rm.oauthreg)
-			if err == nil {
-				rm.authimpl = auth
-				rm.usersService.Auth = auth
-				rm.configService.Auth = auth
-			}
-		}
-		close(stp)
-	}()
 	return nil
 }
 
@@ -242,13 +317,24 @@ func (rm *restmanager) setAdmins(admins ...string) {
 	}
 }
 
+func (rm *restmanager) setConfig(zone string, authurl string, verifyCert bool) error {
+	cfg, err := rm.configer.GetManagerConfig(zone)
+	if err != nil {
+		return err
+	}
+	cfg.AuthUrl = authurl
+	cfg.VerifyCert = verifyCert
+	return rm.configer.PutManagerConfig(zone, *cfg)
+}
+
 func main() {
 	root.PersistentFlags().StringVarP(&etcdConfig, "etcd", "e", "http://localhost:4001", "etcd cluster machine Url's")
 	root.PersistentFlags().StringVarP(&publish, "publish", "p", "self", "self published http address. if empty don't publish, the value 'self' will be replace with the currnent listen address")
 	root.PersistentFlags().StringVarP(&zone, "zone", "z", "intranet", "use this zone as a subtree in the etcd backbone")
 	root.PersistentFlags().StringVarP(&listen, "listen", "l", ":9011", "listen address for the endpoint")
+	root.PersistentFlags().StringVar(&clilisten, "clilisten", "", "listen address for the cli endpoint. if empty use the 'listen' address")
 	root.PersistentFlags().BoolVar(&useweb, "useweb", true, "start a web UI with oauth")
 	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
-	root.AddCommand(cmdAdmins, versionCmd, serve)
+	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve)
 	root.Execute()
 }

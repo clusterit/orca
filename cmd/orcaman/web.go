@@ -10,6 +10,7 @@ import (
 	"github.com/clusterit/orca/auth/jwt"
 	"github.com/clusterit/orca/auth/oauth"
 	"github.com/clusterit/orca/config"
+	"github.com/clusterit/orca/etcd"
 )
 
 func webInitZone(zone string, cfg config.ManagerConfig, reg oauth.OAuthRegistry) (auth.Auther, error) {
@@ -35,8 +36,8 @@ func webRegisterUrlMapping(mux *http.ServeMux) {
 	mux.Handle("/", http.FileServer(rice.MustFindBox("app").HTTPBox()))
 }
 
-func NewWeb(etcds []string, publishurl string) (*restmanager, error) {
-	rm, err := newRest(etcds, publishurl, webRoot)
+func NewWeb(cc *etcd.Cluster, cfg config.Configer, publishurl string) (*restmanager, error) {
+	rm, err := newRest(cc, cfg, publishurl, webRoot)
 	if err != nil {
 		return nil, err
 	}

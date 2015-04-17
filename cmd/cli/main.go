@@ -60,6 +60,15 @@ func newCli() *cli {
 	return &cli{server: serviceUrl, user: user, password: passwd, session: sess}
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Long:  "Print the version number of Orca client",
+	Short: `Orca's build version`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Orca service client, revision '%s'\n", revision)
+	},
+}
+
 func main() {
 
 	var cli = &cobra.Command{Use: "cli"}
@@ -68,7 +77,7 @@ func main() {
 	cli.PersistentFlags().BoolVarP(&password, "password", "p", false, "prompt for a password if set. Environment variable ORCA_PASSWORD overwrites this")
 	cli.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug output of the HTTP flow")
 
-	cli.AddCommand(usercmd, keycmd, zones, gateway, oauthCmd)
+	cli.AddCommand(usercmd, keycmd, zones, gateway, oauthCmd, versionCmd)
 
 	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()

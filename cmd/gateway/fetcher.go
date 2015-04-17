@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/clusterit/orca/cmd"
 	"github.com/clusterit/orca/etcd"
@@ -37,8 +38,12 @@ func (hf *httpFetcher) UserByKey(zone, key string) (*users.User, error) {
 		return nil, fmt.Errorf("no managers registered in configuration")
 	}
 	for _, url := range urls {
+		serviceUrl := fmt.Sprintf("%s/users/%s/pubkey", url, zone)
+		if strings.HasSuffix(url, "/") {
+			serviceUrl = fmt.Sprintf("%susers/%s/pubkey", url, zone)
+		}
 		r := napping.Request{
-			Url:     fmt.Sprintf("%s/users/%s/pubkey", url, zone),
+			Url:     serviceUrl,
 			Method:  "POST",
 			Payload: key,
 			Result:  &u,
