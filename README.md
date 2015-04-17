@@ -26,6 +26,25 @@ implement your own REST service (its one single function) or you can use the
 preimplemented key store bundled with `orca` which uses a clustered `etcd` 
 backbone to store all the public keys.
 
+## Install/Build
+
+To build `orca` you need `make` and `bower` and well ... `go` :-).
+
+Create a new workspace in your home and execute the included `setup.sh`. You do not
+need to clone before, the `setup.sh` clones:
+```sh
+~ mkdir orcaWorkspace
+~ cd orcaWorkspace
+~ curl https://raw.githubusercontent.com/clusterit/orca/master/setup.sh | /bin/sh
+```
+
+Now you have a `~/orcaWorkspace` directory which should be embedded in your GOPATH. This
+workspace contains all needed dependencies. If you don't want a separate project directory
+for `orca` you do a `go get github.com/clusterit/orca/cmd/gateway` and the gateway will
+be installed in your default GOPATH. The other tools can be built with `make`. 
+
+TODO: dockerize the build 
+
 ## Usage
 
 It is really simple to use. First of all you must have a SSH key pair and your 
