@@ -23,6 +23,11 @@ embed:
 
 depends:
 	go get github.com/GeertJohan/go.rice/rice
+	go get github.com/robfig/glock
+	glock sync github.com/clusterit/orca
+
+glock:
+	glock save github.com/clusterit/orca
 	
 clean:
 	rm -rf $(OUTROOT)/*
