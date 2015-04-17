@@ -43,6 +43,8 @@ workspace contains all needed dependencies. If you don't want a separate project
 for `orca` you do a `go get github.com/clusterit/orca/cmd/gateway` and the gateway will
 be installed in your default GOPATH. The other tools can be built with `make`. 
 
+All binaries are built into `src/github.com/clusterit/orca/packaging/`.
+
 TODO: dockerize the build 
 
 ## Usage
