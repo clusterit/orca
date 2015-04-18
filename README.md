@@ -47,26 +47,116 @@ All binaries are built into `src/github.com/clusterit/orca/packaging/`.
 
 TODO: dockerize the build 
 
+
 ## Usage
 
-It is really simple to use. First of all you must have a SSH key pair and your 
-client must have a running `ssh-agent` with the private key loaded. Second, your 
-public key must be installed in the `authorized_keys` of your targeted backend 
-servers. If you don't implement your own key store, you have to upload your 
-public key to the `orca` keystore. This can be done with `orcaman` a simple 
-webtool which uses OpenID Connect (OAuth2 for Login) to authenticate the user. 
-If this is successful and the user was already authorized for the use of `orca` 
-he can now upload his public keys.
+Please install [etcd](https://github.com/coreos/etcd) and start a cluster; a
+single machine cluster is ok.
 
-Now the last part:
-```sh
-  ssh -A user@backend1@sshgw
+`orcaman` uses an external Oauth provider to authenticate. So first of all, please
+register a new application with your github account, navigate to your settings
+[and register a new application](https://github.com/settings/applications/new). Enter
+*Orca local* as name and *http://localhost:9011* as homepage URL. The redirect
+url should be *http://localhost:9011/redirect.html*. Now click on `Update Application`
+and you will get a `Client ID` and a `Client Secret`. As the name says, keep the
+secret in a secret place :-).
+
+Now start `orcaman` and register a oauth provider (at this time, `orca` knows
+the settings for *github* and *google*):
 ```
-and voilà: You're logged in to the Backend 1 server with your `user` account!
+orcaman provider github <your-clientid> <your-clientsecret>
+2015/04/18 16:04:03 [DEBUG] no zones existing, creating zone 'intranet'.
+2015/04/18 16:04:06 [DEBUG] create a default gatway setting
+2015/04/18 16:04:07 [DEBUG] create a default ManagerConfig setting
+(*oauth.OauthRegistration)(0xc208070420)({
+ Network: (string) (len=6) "github",
+ ClientId: (string) (len=20) "<your-clientid>",
+ ClientSecret: (string) (len=40) "<your-clientsecret>",
+ Scopes: (string) (len=10) "user:email",
+ AuthUrl: (string) (len=40) "https://github.com/login/oauth/authorize",
+ AccessTokenUrl: (string) (len=43) "https://github.com/login/oauth/access_token",
+ UserinfoUrl: (string) (len=27) "https://api.github.com/user",
+ PathId: (string) (len=5) "login",
+ PathName: (string) (len=4) "name",
+ PathPicture: (string) (len=10) "avatar_url",
+ PathCover: (string) ""
+})
+```
+
+If your `etcd` cluster is not accessible via `http://localhost:4001` you can
+specify a different location via the `-e ...` flag. You can also name your
+zone with `-z myhomezone`.
+
+Next, register an admin account. Prefix your account with the name of the provider
+you used in the previous step:
+
+```
+orcaman admins github:<your-github-account>
+```
+
+Last, but not least, start `orcaman`:
+```
+orcaman serve
+2015/04/18 16:06:28 [INFO] start listening on :9011
+```
+
+Now you can [connect](http://localhost:9011) 
+
+[Login](doc/img/login.png)
+
+and login with your github account
+
+[Logged in](doc/img/loggedIn.png)
+
+First, upload a public key, so click on the *Key* tab and add a new key:
+
+[Upload Key](doc/img/upload_pubkey.png)
+
+In another console you can now start the gateway:
+```
+gateway
+2015/04/18 16:55:07 [INFO] gateway listens on "[::]:2022" ...
+```
+
+If you try to connect to a known computer via the gateway, you should try it 
+(please accept the server key; you can change it via `orcaman`):
+```
+ssh -A -p 2022 usc@192.168.0.21@localhost
+```
+but the gateway denies access:
+```
+2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: cannot fetch key for user 'usc@192.168.0.21': HTTP 404: {"error":"entity could not be found"}
+2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: cannot fetch key for user 'usc@192.168.0.21': HTTP 404: {"error":"entity could not be found"}
+2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: not allowed to login for user 'usc@192.168.0.21': please activate your account
+2015/04/18 16:55:49 [ERROR] failed to handshake (EOF)
+```
+
+Here you see three attempts to login, because i have three keys in my local
+development computer here. Two of the attepmts  were not accepted because the 
+gateway could not find an acceptable user for the provided public key. The third
+was denied, because the account is not activated, so lets activate it for 1 hour:
+
+[Activate](doc/img/activate_1h.png)
+
+If you now try the login again, it should succeed! 
+
+```
+2015/04/18 17:03:23 [INFO] remote: 127.0.0.1:55777: login by &{Id:0e65dc4d-144d-4410-bad2-88f25ae634df Name:ulrichSchreiner Keys:[{Id:usc@fedorabox Value:ssh-rsa .... Fingerprint:... }] Roles:USER,MANAGER Aliases:[ulrichSchreiner@github] Allowance:0xc208114c00}
+2015/04/18 17:03:23 [INFO] [client=127.0.0.1:55777] [sid=3f1bee208f674830239f3fbc2fc5ab1164578928ff9cc510fd8d530410a39d58] new ssh connection with [SSH-2.0-OpenSSH_6.6.1p1 Ubuntu-8] 
+```
+
+You don't need to use the time based login, go to the *Gateway Settings* and
+disable them. You can also change the loglevel and the SSH Server key. Please
+note that a change of this values is published to all gateway's in the 
+selected zone. You don't have to restart:
+
+[Gateway Settings](doc/img/gateway_settings.png)
+
 
 ## Components
 ----------
-`orca` has different components. Not all of them are needed, but it is simpler to use them at first.
+`orca` has the different components, one for the ssh gateway, another for the management
+interface/rest services.
 
 ### SSH Gateway
 This is the SSH daemon that listens for incoming requests. Any request must have one or more 
@@ -82,7 +172,7 @@ referenced backend server with current `ssh-agent` provided keys.
 
 ### OrcaMan
 The `orcaman` provides Rest-Services and an embedded HTML5 app. This application can be used 
-to store keys inside `etcd` and to request an*Allowance* for a specific time. If you have 
+to store keys inside `etcd` and to request an *Allowance* for a specific time. If you have 
 the **MANAGER** role you can also register new users and change some other settings. 
 The `orcaman` also implements the `UserByKey` REST endpoint
 which is needed by the gateway. If you start `orcaman` with a *publish address* it registeres

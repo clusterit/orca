@@ -13,6 +13,7 @@ import (
 	"github.com/clusterit/orca/etcd"
 	"github.com/clusterit/orca/logging"
 	"github.com/clusterit/orca/users"
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/emicklei/go-restful.v1"
 
 	"github.com/clusterit/orca/auth"
@@ -63,7 +64,40 @@ var cmdAdmins = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+		_, _, err = cmd.ForceZone(cfger, zone, true, true)
+		if err != nil {
+			panic(err)
+		}
 		m.setAdmins(args...)
+	},
+}
+
+var provider = &cobra.Command{
+	Use:   "provider [# network] [# clientid] [# clientsecret]",
+	Short: "create a default provider network for oauth",
+	Long:  "configure a default oauth provider for authentication",
+	Run: func(cm *cobra.Command, args []string) {
+		cc, cfger, err := connect(etcdConfig)
+		if err != nil {
+			panic(err)
+		}
+		m, err := newRest(cc, cfger, "", "")
+		if err != nil {
+			panic(err)
+		}
+		_, _, err = cmd.ForceZone(cfger, zone, true, true)
+		if err != nil {
+			panic(err)
+		}
+		if len(args) < 3 {
+			cm.Help()
+			os.Exit(1)
+		}
+		if reg, err := m.setProvider(args[0], args[1], args[2]); err != nil {
+			panic(err)
+		} else {
+			spew.Dump(reg)
+		}
 	},
 }
 
@@ -301,6 +335,10 @@ func (rm *restmanager) setAdmins(admins ...string) {
 	if len(admins) > 0 {
 		for _, m := range admins {
 			aliasedName := strings.Split(m, ":")
+			if len(aliasedName) < 2 {
+				fmt.Printf("prefix the useralias with the provider, aka: google:user.name@gmail.com, ignore: %s\n", m)
+				continue
+			}
 			u, e := rm.userimpl.Get(m)
 			if e != nil {
 				_, err := rm.userimpl.Create(aliasedName[0], aliasedName[1], aliasedName[1], users.ManagerRoles)
@@ -315,6 +353,10 @@ func (rm *restmanager) setAdmins(admins ...string) {
 			}
 		}
 	}
+}
+
+func (rm *restmanager) setProvider(network, clientid, clientsecret string) (*oauth.OauthRegistration, error) {
+	return rm.oauthreg.Create(network, clientid, clientsecret, "", "", "", "", "", "", "", "")
 }
 
 func (rm *restmanager) setConfig(zone string, authurl string, verifyCert bool) error {
@@ -335,6 +377,6 @@ func main() {
 	root.PersistentFlags().StringVar(&clilisten, "clilisten", "", "listen address for the cli endpoint. if empty use the 'listen' address")
 	root.PersistentFlags().BoolVar(&useweb, "useweb", true, "start a web UI with oauth")
 	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
-	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve)
+	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve, provider)
 	root.Execute()
 }

@@ -36,7 +36,7 @@ var (
 func init() {
 	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
-	viper.SetDefault("bind", ":2222")
+	viper.SetDefault("bind", ":2022")
 	viper.SetDefault("etcd", "http://localhost:4001")
 	viper.SetDefault("zone", "intranet")
 

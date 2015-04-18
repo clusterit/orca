@@ -23,7 +23,7 @@
           <core-toolbar style="background-image: url({{user.backgroundurl}});">
             WebMan <small>[{{zone}}]</small>
             <div flex></div>
-            <core-image class="profile" src="{{ user.thumbnail }}"></core-image>
+            <core-image width="40px" height="40px" sizing="contain" class="profile" src="{{ user.thumbnail }}"></core-image>
           </core-toolbar>
           <core-menu theme="core-light-theme" selected="{{appPage}}" >
             <!-- the next bind is only for a update-trigger if userdetails changes -->
