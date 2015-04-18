@@ -102,15 +102,15 @@ orcaman serve
 
 Now you can [connect](http://localhost:9011) 
 
-[Login](doc/img/login.png)
+![Login](doc/img/login.png)
 
 and login with your github account
 
-[Logged in](doc/img/loggedIn.png)
+![Logged in](doc/img/loggedIn.png)
 
 First, upload a public key, so click on the *Key* tab and add a new key:
 
-[Upload Key](doc/img/upload_pubkey.png)
+![Upload Key](doc/img/upload_pubkey.png)
 
 In another console you can now start the gateway:
 ```
@@ -136,7 +136,7 @@ development computer here. Two of the attepmts  were not accepted because the
 gateway could not find an acceptable user for the provided public key. The third
 was denied, because the account is not activated, so lets activate it for 1 hour:
 
-[Activate](doc/img/activate_1h.png)
+![Activate](doc/img/activate_1h.png)
 
 If you now try the login again, it should succeed! 
 
@@ -150,7 +150,7 @@ disable them. You can also change the loglevel and the SSH Server key. Please
 note that a change of this values is published to all gateway's in the 
 selected zone. You don't have to restart:
 
-[Gateway Settings](doc/img/gateway_settings.png)
+![Gateway Settings](doc/img/gateway_settings.png)
 
 
 ## Components
