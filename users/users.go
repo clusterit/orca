@@ -56,9 +56,9 @@ type Users interface {
 	Permit(a Allowance, ttlSecs uint64) error
 	Delete(uid string) (*User, error)
 	GetByKey(zone string, pubkey string) (*User, *Key, error)
-	Create2FAToken(uid string) (string, error)
-	Use2FAToken(uid string, use bool) error
-	CheckToken(uid, token string) error
+	Create2FAToken(zone, uid string) (string, error)
+	Use2FAToken(zone, uid string, use bool) error
+	CheckToken(zone, uid, token string) error
 	Close() error
 }
 

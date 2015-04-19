@@ -57,7 +57,14 @@
                 <paper-tab>Keys</paper-tab>
               </paper-tabs>
               <core-pages selected="{{datatab}}" flex on-core-select="{{datatabSelected}}">
-                <settings-element apiBase="{{apiBase}}" on-error="{{displayError}}" user="{{user}}" details="{{userdetails}}" on-allowed="{{userRefresh}}"></settings-element>
+                <settings-element 
+                  apiBase="{{apiBase}}" 
+                  zone="{{zone}}" 
+                  on-error="{{displayError}}" 
+                  user="{{user}}" 
+                  details="{{userdetails}}" 
+                  on-allowed="{{userRefresh}}"
+                  on-userdetails="{{userdetailsChanged}}"></settings-element>
                 <keys-element apiBase="{{apiBase}}" zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
               </core-pages>
             </div>
@@ -91,7 +98,7 @@
       on-core-error="{{userNotLoadable}}"
       on-core-response="{{userLoaded}}"></core-ajax>
     <core-ajax
-      id="stageloader"
+      id="zoneloader"
       method="GET"
       auto
       url="{{apiBase}}/configuration/zone"
@@ -132,6 +139,10 @@
           if (det.clicked)
             det.clicked()
         }
+      },
+      userdetailsChanged : function (evt, det) {
+        if (det && det.data)
+          this.userdetails = det.data;
       },
       userLoaded : function (rsp, detail) {
         this.userdetails = detail.response;

@@ -229,8 +229,12 @@ func fetchZoneData(cfger config.Configer, zone string, rms []*restmanager) error
 			auth, err := rm.switchSettings(m, rm.oauthreg)
 			if err == nil {
 				rm.authimpl = auth
-				rm.usersService.Auth = auth
-				rm.configService.Auth = auth
+				if rm.usersService != nil {
+					rm.usersService.Auth = auth
+				}
+				if rm.configService != nil {
+					rm.configService.Auth = auth
+				}
 			}
 		}
 	}

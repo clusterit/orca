@@ -232,8 +232,8 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 	return &u, eu.up.Remove(uid)
 }
 
-func (eu *etcdUsers) Create2FAToken(uid string) (string, error) {
-	_, e := eu.Get(uid)
+func (eu *etcdUsers) Create2FAToken(zone, uid string) (string, error) {
+	u, e := eu.Get(uid)
 	if e != nil {
 		return "", e
 	}
@@ -246,10 +246,11 @@ func (eu *etcdUsers) Create2FAToken(uid string) (string, error) {
 	if err := eu.twofa.Put(uid, encodedSecret); err != nil {
 		return "", err
 	}
-	return encodedSecret, nil
+	auth_string := "otpauth://totp/orca:" + u.Name + "?secret=" + encodedSecret + "&issuer=orca"
+	return auth_string, nil
 }
 
-func (eu *etcdUsers) CheckToken(uid, token string) error {
+func (eu *etcdUsers) CheckToken(zone, uid, token string) error {
 	var secret string
 	if err := eu.twofa.Get(uid, &secret); err != nil {
 		return err
@@ -270,7 +271,7 @@ func (eu *etcdUsers) CheckToken(uid, token string) error {
 	return nil
 }
 
-func (eu *etcdUsers) Use2FAToken(uid string, use bool) error {
+func (eu *etcdUsers) Use2FAToken(zone, uid string, use bool) error {
 	u, e := eu.Get(uid)
 	if e != nil {
 		return e
