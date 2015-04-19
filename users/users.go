@@ -28,6 +28,7 @@ type User struct {
 	Keys      []Key      `json:"keys"`
 	Roles     Roles      `json:"roles"`
 	Aliases   []string   `json:"aliases"`
+	Use2FA    bool       `json:"use2fa"`
 	Allowance *Allowance `json:"allowance,omitempty"`
 }
 
@@ -49,12 +50,15 @@ type Users interface {
 	RemoveAlias(id, network, alias string) (*User, error)
 	GetAll() ([]User, error)
 	Get(id string) (*User, error)
-	GetByKey(zone string, pubkey string) (*User, *Key, error)
 	AddKey(zone string, uid, kid string, pubkey string, fp string) (*Key, error)
 	RemoveKey(zone string, uid, kid string) (*Key, error)
 	Update(uid, username string, rolz Roles) (*User, error)
 	Permit(a Allowance, ttlSecs uint64) error
 	Delete(uid string) (*User, error)
+	GetByKey(zone string, pubkey string) (*User, *Key, error)
+	Create2FAToken(uid string) (string, error)
+	Use2FAToken(uid string, use bool) error
+	CheckToken(uid, token string) error
 	Close() error
 }
 

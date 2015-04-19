@@ -2,8 +2,11 @@ package users
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
+
+	"code.google.com/p/rsc/qr"
 
 	"github.com/clusterit/orca/auth"
 	"github.com/clusterit/orca/common"
@@ -94,7 +97,7 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 	ws.Route(ws.PATCH("/{user-id}/permit/{duration}").To(manager(t.permitUser)).
 		Doc("permits the user to login the next 'duration' seconds").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
-		Param(ws.QueryParameter("duration", "time in seconds to allow logins").DataType("string")).
+		Param(ws.PathParameter("duration", "time in seconds to allow logins").DataType("string")).
 		Operation("permitUser").
 		Returns(200, "OK", Allowance{}))
 	ws.Route(ws.POST("/{zone}/pubkey").To(t.getUserByKey).
@@ -118,6 +121,18 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.PathParameter("zone", "the zone where to search the user in").DataType("string")).
 		Operation("deleteUserKey").
 		Returns(200, "OK", Key{}))
+	ws.Route(ws.GET("/2fatoken").To(userRoles(t.gen2FAtoken)).
+		Doc("generates a 2FA token for the current user and returns an PNG encoded image with the secret").
+		Operation("gen2FAtoken").
+		Reads("").
+		Returns(200, "OK", []byte{}))
+	ws.Route(ws.PATCH("/2fa/{usage}/{token}").To(userRoles(t.use2fa)).
+		Doc("stores a flag if the user wants 2fa").
+		Param(ws.PathParameter("usage", "enables or disables 2fa").DataType("string")).
+		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
+		Operation("use2fa").
+		Reads("").
+		Returns(200, "OK", User{}))
 	ws.Route(ws.POST("/parsekey").To(userRoles(t.parseKey)).
 		Doc("retrieves the user with the embedded public key").
 		Operation("parseKey").
@@ -267,6 +282,42 @@ func (t *UsersService) removeAlias(me *User, request *restful.Request, response 
 	alias := request.PathParameter("alias")
 	network := request.PathParameter("network")
 	rest.HandleEntity(t.Provider.RemoveAlias(uid, network, alias))(request, response)
+}
+
+func (t *UsersService) use2fa(me *User, request *restful.Request, response *restful.Response) {
+	usage := request.PathParameter("usage")
+	token := request.PathParameter("token")
+	usg, err := strconv.ParseBool(usage)
+	if err != nil {
+		rest.HandleError(err, response)
+		return
+	}
+	if err := t.Provider.CheckToken(me.Id, token); err != nil {
+		rest.HandleError(err, response)
+		return
+	}
+	if err := t.Provider.Use2FAToken(me.Id, usg); err != nil {
+		rest.HandleError(err, response)
+		return
+	}
+
+	response.WriteEntity(me)
+}
+
+func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response *restful.Response) {
+	sec, e := t.Provider.Create2FAToken(me.Id)
+	if e != nil {
+		rest.HandleError(e, response)
+		return
+	}
+	// todo: add some company/zone/... data to support more installations
+	auth_string := "otpauth://totp/orca:" + url.QueryEscape(me.Name) + "?secret=" + sec + "&issuer=orca"
+	code, e := qr.Encode(auth_string, qr.L)
+	if e != nil {
+		rest.HandleError(e, response)
+		return
+	}
+	response.WriteEntity(code.PNG())
 }
 
 func (t *UsersService) parseKey(me *User, request *restful.Request, response *restful.Response) {

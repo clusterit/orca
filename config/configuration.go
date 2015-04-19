@@ -23,6 +23,7 @@ type ManagerConfig struct {
 type NewManagerConfig <-chan ManagerConfig
 
 type Gateway struct {
+	Use2FA     bool   `json:"use2fa"`
 	HostKey    string `json:"hostkey"`
 	LogLevel   string `json:"loglevel"`
 	CheckAllow bool   `json:"checkAllow"`

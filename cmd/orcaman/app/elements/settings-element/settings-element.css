@@ -9,6 +9,10 @@
   border-radius: 2px;
 }
 
+#twofa {
+  padding: 5px;
+}
+
 #username {
   padding: 5px;
 }

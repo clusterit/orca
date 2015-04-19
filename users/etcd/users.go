@@ -1,6 +1,9 @@
 package etcd
 
 import (
+	"crypto/rand"
+	"encoding/base32"
+	"fmt"
 	"strings"
 
 	"github.com/clusterit/orca/common"
@@ -8,6 +11,7 @@ import (
 	. "github.com/clusterit/orca/users"
 	etcderr "github.com/coreos/etcd/error"
 	goetcd "github.com/coreos/go-etcd/etcd"
+	"github.com/dgryski/dgoogauth"
 )
 
 const (
@@ -15,13 +19,15 @@ const (
 	aliasPath  = "/alias"
 	keysPath   = "/keys"
 	permitPath = "/permit"
+	twofaPath  = "/2fa"
 )
 
 type etcdUsers struct {
-	up etcd.Persister
-	kp etcd.Persister
-	pm etcd.Persister
-	al etcd.Persister
+	up    etcd.Persister
+	kp    etcd.Persister
+	pm    etcd.Persister
+	al    etcd.Persister
+	twofa etcd.Persister
 }
 
 func New(cl *etcd.Cluster) (Users, error) {
@@ -41,7 +47,11 @@ func New(cl *etcd.Cluster) (Users, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &etcdUsers{up: up, kp: kp, pm: pm, al: al}, nil
+	twofa, e := cl.NewJsonPersister("/data" + twofaPath)
+	if e != nil {
+		return nil, e
+	}
+	return &etcdUsers{up: up, kp: kp, pm: pm, al: al, twofa: twofa}, nil
 }
 
 func (eu *etcdUsers) key(k *Key) string {
@@ -220,6 +230,56 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 	}
 	eu.pm.Remove(uid)
 	return &u, eu.up.Remove(uid)
+}
+
+func (eu *etcdUsers) Create2FAToken(uid string) (string, error) {
+	_, e := eu.Get(uid)
+	if e != nil {
+		return "", e
+	}
+	sec := make([]byte, 6)
+	_, err := rand.Read(sec)
+	if err != nil {
+		return "", err
+	}
+	encodedSecret := base32.StdEncoding.EncodeToString(sec)
+	if err := eu.twofa.Put(uid, encodedSecret); err != nil {
+		return "", err
+	}
+	return encodedSecret, nil
+}
+
+func (eu *etcdUsers) CheckToken(uid, token string) error {
+	var secret string
+	if err := eu.twofa.Get(uid, &secret); err != nil {
+		return err
+	}
+
+	otpc := &dgoogauth.OTPConfig{
+		Secret:      secret,
+		WindowSize:  3,
+		HotpCounter: 0,
+	}
+	ok, err := otpc.Authenticate(token)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("invalid token")
+	}
+	return nil
+}
+
+func (eu *etcdUsers) Use2FAToken(uid string, use bool) error {
+	u, e := eu.Get(uid)
+	if e != nil {
+		return e
+	}
+	u.Use2FA = use
+	if !use {
+		eu.twofa.Remove(uid)
+	}
+	return eu.up.Put(uid, u)
 }
 
 func (eu *etcdUsers) Close() error {
