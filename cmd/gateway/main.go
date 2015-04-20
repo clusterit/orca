@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/clusterit/orca/timebuffer"
+
 	"github.com/hashicorp/logutils"
 
 	"github.com/clusterit/orca/cmd"
@@ -21,6 +23,10 @@ import (
 	"github.com/spf13/viper"
 
 	"golang.org/x/crypto/ssh"
+)
+
+const (
+	timeoutFor2FAinSeconds = 30
 )
 
 var (
@@ -75,6 +81,7 @@ func initWithConfig(gw *config.Gateway) error {
 
 	sshConfig = ssh.ServerConfig{
 		PublicKeyCallback: keyAuth,
+		PasswordCallback:  pwdCallback,
 		ServerVersion:     fmt.Sprintf("SSH-2.0-orca_%s", revision),
 	}
 	sshConfig.AddHostKey(signer)
@@ -104,7 +111,12 @@ func initWithSettings(zone string) error {
 	return nil
 }
 
-func checkAllowed(u *users.User) error {
+func checkAllowed(sessid []byte, u *users.User) error {
+	log.Printf("check allow: %#v", *u)
+	if u.Use2FA {
+		timebuffer.Put(string(sessid), []byte(u.Id), timeoutFor2FAinSeconds)
+		return fmt.Errorf("2FA enabled, next password check")
+	}
 	if !configuration.CheckAllow {
 		return nil
 	}
@@ -125,13 +137,28 @@ func keyAuth(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error)
 		Log(logging.Debug, "remote: %s: cannot fetch key for user '%s': %s", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
 	}
-	if err := checkAllowed(usr); err != nil {
+	if err := checkAllowed(conn.SessionID(), usr); err != nil {
 		Log(logging.Debug, "remote: %s: not allowed to login for user '%s': %s", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
 	}
 	Log(logging.Info, "remote: %s: login by %+v", conn.RemoteAddr().String(), usr)
 	return &ssh.Permissions{Extensions: map[string]string{
 		"user_id": usr.Id}}, nil
+}
+
+func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
+	uid := timebuffer.Get(string(conn.SessionID()))
+	if uid == nil {
+		Log(logging.Debug, "remote: %s: no key auth happend before OTP check '%s'", conn.RemoteAddr().String(), conn.User())
+		return nil, fmt.Errorf("no key auth happend before OTP check")
+	}
+	err := fetcher.CheckToken(zone, string(uid), string(password))
+	if err != nil {
+		Log(logging.Debug, "remote: %s: wrong token for user '%s': '%s'", conn.RemoteAddr().String(), conn.User(), err)
+		return nil, err
+	}
+	return &ssh.Permissions{Extensions: map[string]string{
+		"user_id": string(uid)}}, nil
 }
 
 func main() {

@@ -137,12 +137,23 @@ func (eu *etcdUsers) Get(id string) (*User, error) {
 }
 
 func (eu *etcdUsers) GetByKey(zone, pubkey string) (*User, *Key, error) {
-	var u User
+	var (
+		u   User
+		uid string
+	)
 	pk, err := ParseKey(pubkey)
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := eu.kp.Get(eu.key(pk), &u); err != nil {
+	if err := eu.kp.Get(eu.key(pk), &uid); err != nil {
+		if cerr, ok := err.(*goetcd.EtcdError); ok {
+			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
+				return nil, nil, common.ErrNotFound
+			}
+		}
+		return nil, nil, err
+	}
+	if err := eu.up.Get(uid, &u); err != nil {
 		if cerr, ok := err.(*goetcd.EtcdError); ok {
 			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
 				return nil, nil, common.ErrNotFound
@@ -172,7 +183,7 @@ func (eu *etcdUsers) AddKey(zone, uid, kid string, pubkey string, fp string) (*K
 	if err := eu.up.Put(uid, &u); err != nil {
 		return nil, err
 	}
-	if err := eu.kp.Put(eu.key(&k), &u); err != nil {
+	if err := eu.kp.Put(eu.key(&k), uid); err != nil {
 		// we should put the old user back ... i'm too lazy now
 		return nil, err
 	}

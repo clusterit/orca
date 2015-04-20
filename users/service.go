@@ -126,6 +126,14 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Operation("gen2FAtoken").
 		Reads("").
 		Returns(200, "OK", []byte{}))
+	ws.Route(ws.GET("/{zone}/{user-id}/{token}/check").To(t.checkToken).
+		Doc("checks a 2FA token for the given user-id").
+		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
+		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
+		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
+		Operation("checkToken").
+		Reads("").
+		Returns(200, "OK", ""))
 	ws.Route(ws.PATCH("/{zone}/2fa/{usage}/{token}").To(userRoles(t.use2fa)).
 		Doc("stores a flag if the user wants 2fa").
 		Param(ws.PathParameter("usage", "enables or disables 2fa").DataType("string")).
@@ -308,6 +316,17 @@ func (t *UsersService) use2fa(me *User, request *restful.Request, response *rest
 
 	me.Use2FA = usg
 	response.WriteEntity(me)
+}
+
+func (t *UsersService) checkToken(request *restful.Request, response *restful.Response) {
+	zone := request.PathParameter("zone")
+	uid := request.PathParameter("user-id")
+	token := request.PathParameter("token")
+	if err := t.Provider.CheckToken(zone, uid, token); err != nil {
+		response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
+		return
+	}
+	response.WriteEntity("")
 }
 
 func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response *restful.Response) {
