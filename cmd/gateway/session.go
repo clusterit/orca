@@ -163,7 +163,8 @@ func (cs *clientSession) handleChannel(con ssh.Conn, channel ssh.Channel, reqs <
 	defer func() {
 		e := recover()
 		if e != nil {
-			cs.errorf("handle Channel: %s", e)
+			cs.errorf("handle Channel: %s (is there an agent running on client?)", e)
+			con.Close()
 		}
 	}()
 	for req := range reqs {
