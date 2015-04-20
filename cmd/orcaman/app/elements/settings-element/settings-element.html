@@ -10,6 +10,11 @@
         <div>
           <paper-button raised id="disableTwofa" on-tap="{{disable2FA}}">Disable 2FA</paper-button>
         </div>
+        <div>Allow login after a successful authentication for the next</div>
+        <div>
+          <paper-slider id="autlogin2fa" pin snaps max="10" step="1" value="{{autologin}}" ></paper-slider>
+        </div>
+        <div><b><span>{{autologin}}</span></b> hours. </div>
         </template>
         <template if="{{!details.use2fa}}">
         <div>You are not using Two Factor Auth</div>
@@ -18,21 +23,23 @@
         </div>
         </template>
       </div>
-      <template if="{{details.allowance}}">
-        <div id="allowedlabel">You are allowed to login via SSH until <b>{{details.allowance.until | formatTime}}</b></div>
+      <template if="{{!details.use2fa}}">
+        <template if="{{details.allowance}}">
+          <div id="allowedlabel">You are allowed to login via SSH until <b>{{details.allowance.until | formatTime}}</b></div>
+        </template>
+        <template if="{{!details.allowance}}">
+          <div id="allowedlabel">You are not allowed to login, please activate your account.</div>
+        </template>
+        <div id="loginlabel">Allow Login for the next ...</div>
+        <div layout horiztontal center-justified>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="0">0</paper-button>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="12">12 h</paper-button>
+          <paper-button raised class="white" on-tap="{{allow}}" data-value="24">24 h</paper-button>
+        </div>
       </template>
-      <template if="{{!details.allowance}}">
-        <div id="allowedlabel">You are not allowed to login, please activate your account.</div>
-      </template>
-      <div id="loginlabel">Allow Login for the next ...</div>
-      <div layout horiztontal center-justified>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="0">0</paper-button>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="12">12 h</paper-button>
-        <paper-button raised class="white" on-tap="{{allow}}" data-value="24">24 h</paper-button>
-      </div>
     </div>
     <paper-dialog backdrop id="enable2fadialog" heading="Setup 2 Factor Auth" >
       <img id="qrcode" >
@@ -59,11 +66,17 @@
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{user2faSet}}"></core-ajax>
+    <core-ajax
+      id="autologin2fa"
+      method="PATCH"
+      url="{{apiBase}}/users/{{zone}}/autologin2fa/{{autologinSecs}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"></core-ajax>
 
     <core-ajax
       id="allowance"
       method="PATCH"
-      url="{{apiBase}}/users/{{details.id}}/permit/{{duration}}"
+      url="{{apiBase}}/users/permit/{{duration}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{userAllowed}}"></core-ajax>
@@ -74,13 +87,24 @@
       duration : 0,
       allowedtime : "",
       user : null,
+      details: null,
       use : false,
       enteredToken : "",
+      autologin : 0,
+      autologinSecs: 0,
       
       ready : function () {
         if (this.user && this.user.allowance) {
           this.allowedtime = this.user.allowance.until;
         }
+      },
+      detailsChanged : function (oldv, newv) {
+        if (newv)
+          this.autologin = newv.autologinafter2FA / 3600;
+      },
+      autologinChanged : function (oldv, newv) {
+        this.autologinSecs = newv*3600;
+        this.$.autologin2fa.go();
       },
       show2FA : function () {
         this.$.gen2fa.go();

@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/etcd"
@@ -132,6 +133,8 @@ func (eu *etcdUsers) Get(id string) (*User, error) {
 	}
 	if err := eu.pm.Get(realid, &a); err == nil {
 		u.Allowance = &a
+	} else {
+		u.Allowance = nil
 	}
 	return &u, nil
 }
@@ -166,6 +169,8 @@ func (eu *etcdUsers) GetByKey(zone, pubkey string) (*User, *Key, error) {
 			var a Allowance
 			if err := eu.pm.Get(u.Id, &a); err == nil {
 				u.Allowance = &a
+			} else {
+				u.Allowance = nil
 			}
 			return &u, &k, nil
 		}
@@ -226,6 +231,7 @@ func (eu *etcdUsers) Permit(a Allowance, ttlSecs uint64) error {
 	if ttlSecs == 0 {
 		return eu.pm.Remove(a.Uid)
 	}
+	a.Until = time.Now().UTC().Add(time.Second * time.Duration(ttlSecs))
 	return eu.pm.PutTtl(a.Uid, ttlSecs, &a)
 }
 
@@ -261,6 +267,29 @@ func (eu *etcdUsers) Create2FAToken(zone, uid string) (string, error) {
 	return auth_string, nil
 }
 
+func (eu *etcdUsers) CheckAndAllowToken(zone, uid, token string, maxAllowance int) error {
+	if err := eu.CheckToken(zone, uid, token); err != nil {
+		return err
+	}
+	u, e := eu.Get(uid)
+	if e != nil {
+		return e
+	}
+	permit := u.AutologinAfter2FA
+	if maxAllowance < permit {
+		permit = maxAllowance
+	}
+	if permit > 0 {
+		a := Allowance{
+			GrantedBy: uid,
+			Uid:       uid,
+			Until:     time.Now(), // will be set in the Permit function
+		}
+		return eu.Permit(a, uint64(maxAllowance))
+	}
+	return nil
+}
+
 func (eu *etcdUsers) CheckToken(zone, uid, token string) error {
 	var secret string
 	if err := eu.twofa.Get(uid, &secret); err != nil {
@@ -292,6 +321,15 @@ func (eu *etcdUsers) Use2FAToken(zone, uid string, use bool) error {
 		eu.twofa.Remove(uid)
 	}
 	return eu.up.Put(uid, u)
+}
+
+func (eu *etcdUsers) SetAutologinAfter2FA(zone, uid string, duration int) (*User, error) {
+	u, e := eu.Get(uid)
+	if e != nil {
+		return nil, e
+	}
+	u.AutologinAfter2FA = duration
+	return u, eu.up.Put(uid, u)
 }
 
 func (eu *etcdUsers) Close() error {

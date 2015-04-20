@@ -14,7 +14,7 @@ import (
 
 type UserFetcher interface {
 	UserByKey(zone, key string) (*users.User, error)
-	CheckToken(zone, uid, token string) error
+	CheckToken(zone, uid, token string, maxtime int) error
 }
 
 type httpFetcher struct {
@@ -29,7 +29,7 @@ func NewHttpFetcher(cc *etcd.Cluster) (UserFetcher, error) {
 	return &httpFetcher{managerConfig: cfg}, nil
 }
 
-func (hf *httpFetcher) CheckToken(zone, uid, token string) error {
+func (hf *httpFetcher) CheckToken(zone, uid, token string, maxtime int) error {
 	urls, err := hf.managerConfig.GetValues("/" + cmd.ManagerService)
 	if err != nil {
 		return err
@@ -39,9 +39,9 @@ func (hf *httpFetcher) CheckToken(zone, uid, token string) error {
 	}
 	var res string
 	for _, url := range urls {
-		serviceUrl := fmt.Sprintf("%s/users/%s/%s/%s/check", url, zone, uid, token)
+		serviceUrl := fmt.Sprintf("%s/users/%s/%s/%s/check?maxtime=%d", url, zone, uid, token, maxtime)
 		if strings.HasSuffix(url, "/") {
-			serviceUrl = fmt.Sprintf("%susers/%s/%s/%s/check", url, zone, uid, token)
+			serviceUrl = fmt.Sprintf("%susers/%s/%s/%s/check?maxtime=%d", url, zone, uid, token, maxtime)
 		}
 		r := napping.Request{
 			Url:    serviceUrl,

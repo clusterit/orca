@@ -23,13 +23,14 @@ var (
 )
 
 type User struct {
-	Id        string     `json:"id"`
-	Name      string     `json:"name"`
-	Keys      []Key      `json:"keys"`
-	Roles     Roles      `json:"roles"`
-	Aliases   []string   `json:"aliases"`
-	Use2FA    bool       `json:"use2fa"`
-	Allowance *Allowance `json:"allowance,omitempty"`
+	Id                string     `json:"id"`
+	Name              string     `json:"name"`
+	Keys              []Key      `json:"keys"`
+	Roles             Roles      `json:"roles"`
+	Aliases           []string   `json:"aliases"`
+	Use2FA            bool       `json:"use2fa"`
+	AutologinAfter2FA int        `json:"autologinafter2FA"`
+	Allowance         *Allowance `json:"allowance,omitempty"`
 }
 
 type Key struct {
@@ -57,8 +58,10 @@ type Users interface {
 	Delete(uid string) (*User, error)
 	GetByKey(zone string, pubkey string) (*User, *Key, error)
 	Create2FAToken(zone, uid string) (string, error)
+	SetAutologinAfter2FA(zone, uid string, duration int) (*User, error)
 	Use2FAToken(zone, uid string, use bool) error
 	CheckToken(zone, uid, token string) error
+	CheckAndAllowToken(zone, uid, token string, maxAllowance int) error
 	Close() error
 }
 

@@ -3,32 +3,32 @@ package timebuffer
 import "time"
 
 var (
-	buffer    map[string][]byte
+	buffer    map[string]interface{}
 	requests  rqchan
 	responses rspchan
 )
 
 type rq struct {
 	key string
-	val []byte
+	val interface{}
 }
 
 type rsp struct {
 	key string
-	val chan []byte
+	val chan interface{}
 }
 type rqchan chan rq
 type rspchan chan rsp
 
 func init() {
-	buffer = make(map[string][]byte)
+	buffer = make(map[string]interface{})
 	requests = make(rqchan)
 	responses = make(rspchan)
 
 	go handle(requests, responses)
 }
 
-func Put(key string, val []byte, ttl int) {
+func Put(key string, val interface{}, ttl int) {
 	r := rq{key, val}
 	requests <- r
 
@@ -41,9 +41,9 @@ func Put(key string, val []byte, ttl int) {
 	}
 }
 
-func Get(key string) []byte {
+func Get(key string) interface{} {
 	r := rsp{key: key}
-	r.val = make(chan []byte)
+	r.val = make(chan interface{})
 
 	responses <- r
 	return <-r.val

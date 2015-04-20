@@ -112,10 +112,23 @@ func initWithSettings(zone string) error {
 }
 
 func checkAllowed(sessid []byte, u *users.User) error {
-	log.Printf("check allow: %#v", *u)
 	if u.Use2FA {
-		timebuffer.Put(string(sessid), []byte(u.Id), timeoutFor2FAinSeconds)
-		return fmt.Errorf("2FA enabled, next password check")
+		// if the users has 2FA, check the allowance field if another
+		// check is needed
+		if u.Allowance == nil || u.Allowance.Until.Before(time.Now()) {
+			timebuffer.Put(string(sessid), u, timeoutFor2FAinSeconds)
+			return fmt.Errorf("2FA enabled, next password check")
+		}
+
+		if u.Allowance != nil && u.Allowance.Until.After(time.Now().Add(time.Duration(configuration.MaxAutologin2FA)*time.Second)) {
+			timebuffer.Put(string(sessid), u, timeoutFor2FAinSeconds)
+			return fmt.Errorf("allowance too long, next password check")
+		}
+		// there is a successfull allowance
+		return nil
+	}
+	if configuration.Force2FA {
+		return fmt.Errorf("you must use 2fa!")
 	}
 	if !configuration.CheckAllow {
 		return nil
@@ -147,18 +160,20 @@ func keyAuth(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error)
 }
 
 func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, error) {
-	uid := timebuffer.Get(string(conn.SessionID()))
-	if uid == nil {
+	keyusr := timebuffer.Get(string(conn.SessionID()))
+	if keyusr == nil {
 		Log(logging.Debug, "remote: %s: no key auth happend before OTP check '%s'", conn.RemoteAddr().String(), conn.User())
 		return nil, fmt.Errorf("no key auth happend before OTP check")
 	}
-	err := fetcher.CheckToken(zone, string(uid), string(password))
+	usr := keyusr.(*users.User)
+	err := fetcher.CheckToken(zone, usr.Id, string(password), configuration.MaxAutologin2FA)
 	if err != nil {
 		Log(logging.Debug, "remote: %s: wrong token for user '%s': '%s'", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
 	}
+
 	return &ssh.Permissions{Extensions: map[string]string{
-		"user_id": string(uid)}}, nil
+		"user_id": string(usr.Id)}}, nil
 }
 
 func main() {

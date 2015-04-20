@@ -66,7 +66,9 @@
         var gw = {
           hostkey : t.hostkey,
           loglevel : t.loglevel,
-          checkallow: t.forcecheck
+          checkallow: t.forcecheck,
+          force2fa : t.force2fa,
+          maxautologin2fa : parseInt(t.maxautologin, 10)
         };
         this.$.gatewaysaver.xhrArgs = {
           body : JSON.stringify(gw)
@@ -86,6 +88,8 @@
         var t = this.getTab();
         t.loglevel = dat.loglevel;
         t.forcecheck = dat.checkAllow;
+        t.force2fa = dat.force2fa;
+        t.maxautologin = parseInt(dat.maxautologin2fa,10);
         t.updateText(dat.hostkey);
       },
       tabSelected : function (evt, det) {

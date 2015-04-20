@@ -93,7 +93,7 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.QueryParameter("role", "a role of the user").DataType("string").AllowMultiple(true)).
 		Operation("updateUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/{user-id}/permit/{duration}").To(manager(t.permitUser)).
+	ws.Route(ws.PATCH("/permit/{duration}").To(manager(t.permitUser)).
 		Doc("permits the user to login the next 'duration' seconds").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("duration", "time in seconds to allow logins").DataType("string")).
@@ -127,10 +127,11 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Reads("").
 		Returns(200, "OK", []byte{}))
 	ws.Route(ws.GET("/{zone}/{user-id}/{token}/check").To(t.checkToken).
-		Doc("checks a 2FA token for the given user-id").
+		Doc("checks a 2FA token for the given user-id and permits an autologin within the user configured time").
 		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
+		Param(ws.QueryParameter("maxtime", "the maximum number of seconds for the autologin").DataType("int")).
 		Operation("checkToken").
 		Reads("").
 		Returns(200, "OK", ""))
@@ -140,6 +141,13 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
 		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Operation("use2fa").
+		Reads("").
+		Returns(200, "OK", User{}))
+	ws.Route(ws.PATCH("/{zone}/autologin2fa/{duration}").To(userRoles(t.autologin2fa)).
+		Doc("updates the duration for which a 2FA is not necessary").
+		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
+		Param(ws.PathParameter("duration", "the duration in seconds within a new OTP is not requred").DataType("int")).
+		Operation("autologin2fa").
 		Reads("").
 		Returns(200, "OK", User{}))
 	ws.Route(ws.POST("/parsekey").To(userRoles(t.parseKey)).
@@ -212,7 +220,6 @@ func (t *UsersService) updateUser(me *User, request *restful.Request, response *
 }
 
 func (t *UsersService) permitUser(me *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
 	dur := request.PathParameter("duration")
 	dr, err := strconv.ParseInt(dur, 10, 64)
 	if err != nil {
@@ -220,7 +227,7 @@ func (t *UsersService) permitUser(me *User, request *restful.Request, response *
 		return
 	}
 	until := time.Now().UTC().Add(time.Second * time.Duration(dr))
-	a := Allowance{GrantedBy: me.Id, Uid: uid, Until: until}
+	a := Allowance{GrantedBy: me.Id, Uid: me.Id, Until: until}
 	err = t.Provider.Permit(a, uint64(dr))
 	rest.HandleEntity(a, err)(request, response)
 }
@@ -322,11 +329,24 @@ func (t *UsersService) checkToken(request *restful.Request, response *restful.Re
 	zone := request.PathParameter("zone")
 	uid := request.PathParameter("user-id")
 	token := request.PathParameter("token")
-	if err := t.Provider.CheckToken(zone, uid, token); err != nil {
-		response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
-		return
+	maxtime := request.QueryParameter("maxtime")
+	if maxtime != "" {
+		maxt, e := strconv.ParseInt(maxtime, 10, 0)
+		if e != nil {
+			rest.HandleError(e, response)
+			return
+		}
+		if err := t.Provider.CheckAndAllowToken(zone, uid, token, int(maxt)); err != nil {
+			response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
+			return
+		}
+	} else {
+		if err := t.Provider.CheckToken(zone, uid, token); err != nil {
+			response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
+			return
+		}
+		response.WriteEntity("")
 	}
-	response.WriteEntity("")
 }
 
 func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response *restful.Response) {
@@ -342,6 +362,24 @@ func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response 
 		return
 	}
 	response.WriteEntity(code.PNG())
+}
+
+func (t *UsersService) autologin2fa(me *User, request *restful.Request, response *restful.Response) {
+	dur := request.PathParameter("duration")
+	zone := request.PathParameter("zone")
+	duration, err := strconv.ParseInt(dur, 10, 0)
+	if err != nil {
+		rest.HandleError(err, response)
+		return
+	}
+
+	// when changin the autologin-value, remove all current
+	// allowed-blocks.
+	a := Allowance{GrantedBy: me.Id, Uid: me.Id, Until: time.Now()}
+	// ignore error here. if there is no current allow-instance we get a notfound here
+	t.Provider.Permit(a, 0)
+
+	rest.HandleEntity(t.Provider.SetAutologinAfter2FA(zone, me.Id, int(duration)))(request, response)
 }
 
 func (t *UsersService) parseKey(me *User, request *restful.Request, response *restful.Response) {
