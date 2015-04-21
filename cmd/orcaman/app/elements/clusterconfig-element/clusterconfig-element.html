@@ -1,0 +1,54 @@
+<link rel="import" href="../elements.html">
+
+<polymer-element name="clusterconfig-element" attributes="apiBase user">
+  <template>
+    <link rel="stylesheet" href="clusterconfig-element.css">
+    <div class="settingscard" fit>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Clustername</div>
+          <div class="labelhelp">
+            The name of this orca cluster. If you decide to use 2FA this name
+            will be used in the descriptor for the OTP-app, so you can have different
+            installations with different OTP accounts.<br>
+            This cluster needs exactly one etcd-backendstore.
+          </div>
+        </div>
+        <paper-input label="Clustername" value="{{config.name}}"></paper-input>
+      </div>
+      
+    </div>
+    <core-ajax
+      id="ccloader"
+      method="GET"
+      url="{{apiBase}}/configuration/cluster"
+      handleAs="json"
+      headers='{"Authorization":"{{user.token}}"}'
+      response="{{config}}"></core-ajax>
+    <core-ajax
+      id="ccsaver"
+      method="PUT"
+      url="{{apiBase}}/configuration/cluster"
+      handleAs="json"
+      contentType="application/json"
+      headers='{"Authorization":"{{user.token}}"}'
+      response="{{configLoaded}}"></core-ajax>
+  </template>
+  <script>
+    Polymer({
+      config: null,
+      
+      ready : function () {
+      },
+      clicked : function () {
+        this.$.ccloader.go();
+      },
+      doSave : function () {
+        this.$.ccsaver.xhrArgs = {
+          body : JSON.stringify(this.config)
+        };
+        this.$.ccsaver.go();
+      },
+    });
+  </script>
+</polymer-element>

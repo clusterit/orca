@@ -6,6 +6,7 @@
 <link rel="import" href="../gateway-element/gateway-element.html">
 <link rel="import" href="../webman-element/webman-element.html">
 <link rel="import" href="../oauth-registration/oauth-registration.html">
+<link rel="import" href="../clusterconfig-element/clusterconfig-element.html">
 
 <polymer-element name="webman-app" flex layout vertical attributes="apiBase" >
   <template>
@@ -68,6 +69,9 @@
                 <keys-element apiBase="{{apiBase}}" zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
               </core-pages>
             </div>
+            <div id="cluster" fit>
+              <clusterconfig-element apiBase="{{apiBase}}" user="{{user}}" fit on-error="{{displayError}}" zone="{{zone}}"></clusterconfig-element>
+            </div>
             <div id="users" fit>
               <users-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}" zone="{{zone}}"></users-element>
             </div>
@@ -120,6 +124,7 @@
 
       menuItems : [
         {target:"settingspage",icon:"social:person",label:"Me", role:"USER"},
+        {target:"cluster",icon:"cloud",label:"Cluster", role:"MANAGER",saveable:true},
         {target:"users",icon:"social:people",label:"Users", role:"MANAGER"},
         {target:"gateway",icon:"settings-input-component",label:"Gateway", role:"MANAGER",saveable:true},
         {target:"webman",icon:"cloud-queue",label:"Manager Config", role:"MANAGER",saveable:true},

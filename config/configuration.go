@@ -34,7 +34,13 @@ type NewGateway <-chan Gateway
 
 type Stop chan bool
 
+type ClusterConfig struct {
+	Name string `json:"name"`
+}
+
 type Configer interface {
+	Cluster() (*ClusterConfig, error)
+	UpdateCluster(ClusterConfig) (*ClusterConfig, error)
 	Zones() ([]string, error)
 	CreateZone(zone string) error
 	DropZone(zone string) error
@@ -60,6 +66,15 @@ func New(cl *etcd.Cluster) (Configer, error) {
 
 func (e *etcdConfig) pt(s, k string) string {
 	return "/zones/" + s + "/" + k
+}
+
+func (e *etcdConfig) Cluster() (*ClusterConfig, error) {
+	var result ClusterConfig
+	return &result, e.persister.Get("/cluster", &result)
+}
+
+func (e *etcdConfig) UpdateCluster(cc ClusterConfig) (*ClusterConfig, error) {
+	return &cc, e.persister.Put("/cluster", cc)
 }
 
 func (e *etcdConfig) Zones() ([]string, error) {

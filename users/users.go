@@ -57,7 +57,7 @@ type Users interface {
 	Permit(a Allowance, ttlSecs uint64) error
 	Delete(uid string) (*User, error)
 	GetByKey(zone string, pubkey string) (*User, *Key, error)
-	Create2FAToken(zone, uid string) (string, error)
+	Create2FAToken(zone, domain, uid string) (string, error)
 	SetAutologinAfter2FA(zone, uid string, duration int) (*User, error)
 	Use2FAToken(zone, uid string, use bool) error
 	CheckToken(zone, uid, token string) error

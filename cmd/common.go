@@ -30,6 +30,14 @@ func PublishAddress(pub, listen, path string) string {
 }
 
 func ForceZone(cfger config.Configer, zone string, createGateway, createMc bool) (*config.Gateway, *config.ManagerConfig, error) {
+	_, err := cfger.Cluster()
+	if common.IsNotFound(err) {
+		logger.Debugf("no clusterconfig existing, creating config 'local corp.'")
+		confg := config.ClusterConfig{Name: "local"}
+		if _, err := cfger.UpdateCluster(confg); err != nil {
+			return nil, nil, err
+		}
+	}
 	zns, err := cfger.Zones()
 	if common.IsNotFound(err) {
 		logger.Debugf("no zones existing, creating zone '%s'.", zone)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/clusterit/orca/auth"
 	"github.com/clusterit/orca/common"
+	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/rest"
 	"gopkg.in/emicklei/go-restful.v1"
 )
@@ -16,6 +17,7 @@ import (
 type UsersService struct {
 	Auth     auth.Auther
 	Provider Users
+	Config   config.Configer
 }
 
 type CheckedUser func(f UserFunction) restful.RouteFunction
@@ -351,7 +353,12 @@ func (t *UsersService) checkToken(request *restful.Request, response *restful.Re
 
 func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response *restful.Response) {
 	zone := request.PathParameter("zone")
-	sec, e := t.Provider.Create2FAToken(zone, me.Id)
+	cluster, e := t.Config.Cluster()
+	if e != nil {
+		rest.HandleError(e, response)
+		return
+	}
+	sec, e := t.Provider.Create2FAToken(zone, cluster.Name, me.Id)
 	if e != nil {
 		rest.HandleError(e, response)
 		return

@@ -10,6 +10,7 @@ import (
 
 	"github.com/clusterit/orca/cmd"
 	"github.com/clusterit/orca/config"
+	configservice "github.com/clusterit/orca/config/service"
 	"github.com/clusterit/orca/etcd"
 	"github.com/clusterit/orca/logging"
 	"github.com/clusterit/orca/users"
@@ -251,7 +252,7 @@ type restmanager struct {
 	configer       config.Configer
 	oauthreg       oauth.OAuthRegistry
 	autherService  *auth.AutherService
-	configService  *config.ConfigService
+	configService  *configservice.ConfigService
 	usersService   *users.UsersService
 	wsContainer    *restful.Container
 	authregService *oauth.AuthRegService
@@ -308,10 +309,10 @@ func (rm *restmanager) register(rootpath string) *restful.Container {
 	rm.autherService = &auth.AutherService{Auth: rm.authimpl}
 	rm.autherService.Register(rootpath, c)
 
-	rm.usersService = &users.UsersService{Auth: rm.authimpl, Provider: rm.userimpl}
+	rm.usersService = &users.UsersService{Auth: rm.authimpl, Provider: rm.userimpl, Config: rm.configer}
 	rm.usersService.Register(rootpath, c)
 
-	rm.configService = &config.ConfigService{Auth: rm.authimpl, Users: rm.userimpl, Config: rm.configer, Zone: zone}
+	rm.configService = &configservice.ConfigService{Auth: rm.authimpl, Users: rm.userimpl, Config: rm.configer, Zone: zone}
 	rm.configService.Register(rootpath, c)
 
 	rm.authregService = &oauth.AuthRegService{Auth: rm.authimpl, Users: rm.userimpl, Registry: rm.oauthreg}

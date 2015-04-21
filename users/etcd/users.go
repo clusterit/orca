@@ -249,7 +249,7 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 	return &u, eu.up.Remove(uid)
 }
 
-func (eu *etcdUsers) Create2FAToken(zone, uid string) (string, error) {
+func (eu *etcdUsers) Create2FAToken(zone, domain, uid string) (string, error) {
 	u, e := eu.Get(uid)
 	if e != nil {
 		return "", e
@@ -263,7 +263,7 @@ func (eu *etcdUsers) Create2FAToken(zone, uid string) (string, error) {
 	if err := eu.twofa.Put(uid, encodedSecret); err != nil {
 		return "", err
 	}
-	auth_string := "otpauth://totp/orca:" + u.Name + "?secret=" + encodedSecret + "&issuer=orca"
+	auth_string := "otpauth://totp/" + u.Name + "?secret=" + encodedSecret + "&issuer=orca@" + domain
 	return auth_string, nil
 }
 
