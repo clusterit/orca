@@ -263,7 +263,7 @@ func (eu *etcdUsers) Create2FAToken(zone, domain, uid string) (string, error) {
 	if err := eu.twofa.Put(uid, encodedSecret); err != nil {
 		return "", err
 	}
-	auth_string := "otpauth://totp/" + u.Name + "?secret=" + encodedSecret + "&issuer=orca@" + domain
+	auth_string := "otpauth://totp/" + u.Name + "@" + domain + "?secret=" + encodedSecret + "&issuer=orca"
 	return auth_string, nil
 }
 
