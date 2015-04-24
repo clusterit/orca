@@ -9,6 +9,35 @@
   border-radius: 2px;
 }
 
+#notwoFApanel {
+  padding: 8px;
+  background: white;
+  margin: 8px;
+}
+
+#twoFApanel {
+  padding: 8px;
+  margin: 8px;
+  background: white;
+}
+
+#browsertable {
+  margin: 10px;
+  display: table;
+}
+
+.topspace {
+  margin-top: 10px;
+}
+.cell {
+  display: table-cell;
+  float: left;
+}
+
+.row {
+  display: table-row;
+}
+
 #twofa {
   padding: 5px;
 }

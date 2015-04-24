@@ -5,40 +5,57 @@
     <link rel="stylesheet" href="settings-element.css">
     <div layout vertical>
       <div layout vertical>
-        <template if="{{details.use2fa}}">
-        <div>You are using Two Factor Auth!</div>
-        <div>
-          <paper-button raised id="disableTwofa" on-tap="{{disable2FA}}">Disable 2FA</paper-button>
+        <paper-shadow z="1" id="twoFApanel">
+          <h3>Two Factor Authentication</h3>
+          <template if="{{details.use2fa}}">
+            <div>Don't want it anymore?
+              <paper-button raised id="disableTwofa" on-tap="{{disable2FA}}">&rarr; Disable</paper-button>
+            </div>
+            <div class="topspace">Allow key-only login after a successful TOTP authentication for the next</div>
+            <div>
+              <paper-slider id="autlogin2fa" pin snaps max="10" step="1" value="{{autologin}}" ></paper-slider>
+            </div>
+            <div><b><span>{{autologin}}</span></b> hours. </div>
+          </template>
+          <template if="{{!details.use2fa}}">
+            <div>You want to use a TOTP for more security?
+              <paper-button raised id="twofa" on-tap="{{show2FA}}">&rarr; Enable</paper-button>
+            </div>
+            <div class="topspace">Please install a TOTP app on your mobile, for example:</div>
+            <div id="browsertable">
+              <div class="row">
+                <div class="cell" style="width:20em">FreeOTP</div>
+                <div class="cell" style="width:10em"><a href="https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp">Android</a></div>
+                <div class="cell" style="width:10em"><a href="https://itunes.apple.com/us/app/freeotp/id872559395">IOS</a></div>
+              </div>
+              <div class="row">
+                <div class="cell" style="width:20em">Google Authenticator</div>
+                <div class="cell" style="width:10em"><a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a></div>
+                <div class="cell" style="width:10em"><a href="https://itunes.apple.com/us/app/google-authenticator/id388497605">IOS</a></div>
+              </div>
+            </div>
+          </template>
         </div>
-        <div>Allow login after a successful authentication for the next</div>
-        <div>
-          <paper-slider id="autlogin2fa" pin snaps max="10" step="1" value="{{autologin}}" ></paper-slider>
-        </div>
-        <div><b><span>{{autologin}}</span></b> hours. </div>
-        </template>
-        <template if="{{!details.use2fa}}">
-        <div>You are not using Two Factor Auth</div>
-        <div>
-          <paper-button raised id="twofa" on-tap="{{show2FA}}">Enable 2FA</paper-button>
-        </div>
-        </template>
-      </div>
+      </paper-shadow>
       <template if="{{!details.use2fa}}">
-        <template if="{{details.allowance}}">
-          <div id="allowedlabel">You are allowed to login via SSH until <b>{{details.allowance.until | formatTime}}</b></div>
-        </template>
-        <template if="{{!details.allowance}}">
-          <div id="allowedlabel">You are not allowed to login, please activate your account.</div>
-        </template>
-        <div id="loginlabel">Allow Login for the next ...</div>
-        <div layout horiztontal center-justified>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="0">0</paper-button>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="12">12 h</paper-button>
-          <paper-button raised class="white" on-tap="{{allow}}" data-value="24">24 h</paper-button>
-        </div>
+        <paper-shadow z="1" id="notwoFApanel">
+          <h3>Key based authentication only</h3>
+          <template if="{{details.allowance}}">
+            <div id="allowedlabel">You are allowed to login via SSH until <b>{{details.allowance.until | formatTime}}</b></div>
+          </template>
+          <template if="{{!details.allowance}}">
+            <div id="allowedlabel">You are not allowed to login, please activate your account.</div>
+          </template>
+          <div id="loginlabel">Allow Login for the next ...</div>
+          <div layout horiztontal center-justified>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="0">0</paper-button>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="1">1 h</paper-button>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="3">3 h</paper-button>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="6">6 h</paper-button>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="12">12 h</paper-button>
+            <paper-button raised class="white" on-tap="{{allow}}" data-value="24">24 h</paper-button>
+          </div>
+        </paper-shadow>
       </template>
     </div>
     <paper-dialog backdrop id="enable2fadialog" heading="Setup 2 Factor Auth" >

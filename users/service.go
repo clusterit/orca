@@ -95,9 +95,8 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.QueryParameter("role", "a role of the user").DataType("string").AllowMultiple(true)).
 		Operation("updateUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/permit/{duration}").To(manager(t.permitUser)).
+	ws.Route(ws.PATCH("/permit/{duration}").To(userRoles(t.permitUser)).
 		Doc("permits the user to login the next 'duration' seconds").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("duration", "time in seconds to allow logins").DataType("string")).
 		Operation("permitUser").
 		Returns(200, "OK", Allowance{}))
