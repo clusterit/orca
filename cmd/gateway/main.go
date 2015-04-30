@@ -43,12 +43,17 @@ func init() {
 	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
 	viper.SetDefault("bind", ":2022")
-	viper.SetDefault("etcd", "http://localhost:4001")
+	viper.SetDefault("etcd_machines", "http://localhost:4001")
+
 	viper.SetDefault("zone", "intranet")
 
 	zone = viper.GetString("zone")
-	etcds := strings.Split(viper.GetString("etcd"), ",")
-	cc, err := etcd.Init(etcds)
+	etcds := strings.Split(viper.GetString("etcd_machines"), ",")
+	etcdKey := viper.GetString("etcd_key")
+	etcdCert := viper.GetString("etcd_cert")
+	etcdCa := viper.GetString("etcd_ca")
+
+	cc, err := etcd.InitTLS(etcds, etcdKey, etcdCert, etcdCa)
 	if err != nil {
 		panic(err)
 	}
