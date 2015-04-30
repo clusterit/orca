@@ -127,10 +127,12 @@ func (e *etcdConfig) ManagerConfig(zone string) (NewManagerConfig, Stop, error) 
 		for {
 			select {
 			case r := <-etcrsp:
-				val := []byte(r.Node.Value)
-				var mg ManagerConfig
-				if err := json.Unmarshal(val, &mg); err == nil {
-					mgrchan <- mg
+				if r != nil && r.Node != nil {
+					val := []byte(r.Node.Value)
+					var mg ManagerConfig
+					if err := json.Unmarshal(val, &mg); err == nil {
+						mgrchan <- mg
+					}
 				}
 			case <-stop:
 				return

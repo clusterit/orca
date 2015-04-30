@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/viper"
+
 	"github.com/clusterit/orca/cmd"
 	"github.com/clusterit/orca/config"
 	configservice "github.com/clusterit/orca/config/service"
@@ -32,6 +34,9 @@ const (
 
 var (
 	etcdConfig string
+	etcdKey    string
+	etcdCert   string
+	etcdCa     string
 	listen     string
 	clilisten  string
 	publish    string
@@ -57,7 +62,7 @@ var cmdAdmins = &cobra.Command{
 	Short: "Set the admin userids",
 	Long:  "Set the admin userids in the configuration backend to enable bootstrapping",
 	Run: func(cm *cobra.Command, args []string) {
-		cc, cfger, err := connect(etcdConfig)
+		cc, cfger, err := connect(etcdConfig, etcdKey, etcdCert, etcdCa)
 		if err != nil {
 			panic(err)
 		}
@@ -78,7 +83,7 @@ var provider = &cobra.Command{
 	Short: "create a default provider network for oauth",
 	Long:  "configure a default oauth provider for authentication",
 	Run: func(cm *cobra.Command, args []string) {
-		cc, cfger, err := connect(etcdConfig)
+		cc, cfger, err := connect(etcdConfig, etcdKey, etcdCert, etcdCa)
 		if err != nil {
 			panic(err)
 		}
@@ -107,7 +112,7 @@ var cliConfig = &cobra.Command{
 	Short: "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
 	Long:  "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
 	Run: func(cm *cobra.Command, args []string) {
-		cc, cfger, err := connect(etcdConfig)
+		cc, cfger, err := connect(etcdConfig, etcdKey, etcdCert, etcdCa)
 		if err != nil {
 			panic(err)
 		}
@@ -138,7 +143,7 @@ var serve = &cobra.Command{
 
 func serveAll() {
 	var managers []*restmanager
-	cc, cfger, err := connect(etcdConfig)
+	cc, cfger, err := connect(etcdConfig, etcdKey, etcdCert, etcdCa)
 	if err != nil {
 		panic(err)
 	}
@@ -188,8 +193,20 @@ func serveAll() {
 	wg.Wait()
 }
 
-func connect(etcds string) (*etcd.Cluster, config.Configer, error) {
-	cc, err := etcd.Init(strings.Split(etcds, ","))
+func connect(etcds string, etcdKey, etcdCert, etcdCaCert string) (*etcd.Cluster, config.Configer, error) {
+	if etcds == "" {
+		etcds = viper.GetString("etcd_machines")
+	}
+	if etcdKey == "" {
+		etcdKey = viper.GetString("etcd_key")
+	}
+	if etcdCert == "" {
+		etcdCert = viper.GetString("etcd_cert")
+	}
+	if etcdCa == "" {
+		etcdCa = viper.GetString("etcd_ca")
+	}
+	cc, err := etcd.InitTLS(strings.Split(etcds, ","), etcdKey, etcdCert, etcdCaCert)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -375,7 +392,10 @@ func (rm *restmanager) setConfig(zone string, authurl string, verifyCert bool) e
 }
 
 func main() {
-	root.PersistentFlags().StringVarP(&etcdConfig, "etcd", "e", "http://localhost:4001", "etcd cluster machine Url's")
+	root.PersistentFlags().StringVarP(&etcdConfig, "etcd", "e", "", "etcd cluster machine Url's. if empty use env ORCA_ETCD_MACHINES which is by default http://localhost:4001")
+	root.PersistentFlags().StringVar(&etcdKey, "etcdkey", "", "the client key for this etcd member if using TLS. if empty use ORCA_ETCD_KEY.")
+	root.PersistentFlags().StringVar(&etcdCert, "etcdcert", "", "the client cert for this etcd member if using TLS. if empty use ORCA_ETCD_CERT.")
+	root.PersistentFlags().StringVar(&etcdCa, "etcdca", "", "the ca for this etcd member if using TLS. if empty use ORCA_ETCD_CA.")
 	root.PersistentFlags().StringVarP(&publish, "publish", "p", "self", "self published http address. if empty don't publish, the value 'self' will be replace with the currnent listen address")
 	root.PersistentFlags().StringVarP(&zone, "zone", "z", "intranet", "use this zone as a subtree in the etcd backbone")
 	root.PersistentFlags().StringVarP(&listen, "listen", "l", ":9011", "listen address for the endpoint")
@@ -383,5 +403,8 @@ func main() {
 	root.PersistentFlags().BoolVar(&useweb, "useweb", true, "start a web UI with oauth")
 	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
 	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve, provider)
+	viper.SetEnvPrefix("orca")
+	viper.SetDefault("etcd_machines", "http://localhost:4001")
+	viper.AutomaticEnv()
 	root.Execute()
 }

@@ -2,12 +2,14 @@ package etcd
 
 import (
 	"encoding/json"
+	"fmt"
 	"path"
 	"reflect"
 	"sync"
 	"time"
 
 	"github.com/clusterit/orca/common"
+	"github.com/clusterit/orca/logging"
 
 	etcderr "github.com/coreos/etcd/error"
 	"github.com/coreos/go-etcd/etcd"
@@ -17,6 +19,8 @@ const (
 	orcaManagerPath = "/orca/manager"
 	orcaPersistPath = "/orca"
 )
+
+var logger = logging.Simple()
 
 // a cluster implementation backed by etcd
 type Cluster struct {
@@ -33,6 +37,20 @@ type Configurator interface {
 // Create the cluster by using the etcd-members
 func Init(machines []string) (*Cluster, error) {
 	client := etcd.NewClient(machines)
+	return &Cluster{client}, nil
+}
+
+// Create the cluster with TLS and client cert
+func InitTLS(machines []string, key, cert, cacert string) (*Cluster, error) {
+	if cert == "" && key == "" && cacert == "" {
+		logger.Warnf("connect to etcd without TLS: %s", machines)
+		return Init(machines)
+	}
+	logger.Infof("connect to etcd with TLS: %s", machines)
+	client, err := etcd.NewTLSClient(machines, cert, key, cacert)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to ETCD via TLS: %s", err)
+	}
 	return &Cluster{client}, nil
 }
 
