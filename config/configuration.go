@@ -157,10 +157,12 @@ func (e *etcdConfig) Gateway(zone string) (NewGateway, Stop, error) {
 		for {
 			select {
 			case r := <-etcrsp:
-				val := []byte(r.Node.Value)
-				var gw Gateway
-				if err := json.Unmarshal(val, &gw); err == nil {
-					gwchan <- gw
+				if r != nil && r.Node != nil {
+					val := []byte(r.Node.Value)
+					var gw Gateway
+					if err := json.Unmarshal(val, &gw); err == nil {
+						gwchan <- gw
+					}
 				}
 			case <-stop:
 				return
