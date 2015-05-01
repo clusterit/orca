@@ -1,10 +1,39 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="gateway-zone" layout vertical attributes="force2fa maxautologin loglevel hostkey forcecheck">
+<polymer-element name="gateway-zone" layout vertical attributes="force2fa maxautologin loglevel hostkey forcecheck allowedcidrs deniedcidrs allowdeny">
   <template>
     <link rel="stylesheet" href="gateway-element.css">
 
     <div class="settingscard" fit>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Allow/Deny</div>
+          <div class="labelhelp">Use first the <i>Allowed Cidr's</i> to check if a destination is allowed. If an IP
+          is not allowed, reject it. If it is allowed, check if it is not denied.<br>
+          When using the <i>Denied</i> first, check if an IP is denied; if not, allow it. If it is denied, check
+          if it is allowed.
+          </div>
+        </div>
+        <paper-toggle-button class="widget" checked="{{allowdeny}}"></paper-toggle-button>
+      </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Allowed Cidrs</div>
+          <div class="labelhelp">A comma separated list if CIDR's which are allowed as destination adresses</div>
+        </div>
+      </div>
+      <div flex class="cidr">
+        <paper-input style="width:100%" label="Allowed CIDRs" value="{{allowedcidrs}}"></paper-input>
+      </div>      
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Denied Cidrs</div>
+          <div class="labelhelp">A comma separated list if CIDR's which are denied as destination adresses</div>
+        </div>
+      </div>
+      <div flex class="authurl">
+        <paper-input style="width:100%" label="Denied CIDRs" value="{{deniedcidrs}}"></paper-input>
+      </div>      
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Time based login</div>

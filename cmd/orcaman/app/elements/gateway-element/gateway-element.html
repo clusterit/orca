@@ -68,6 +68,9 @@
           loglevel : t.loglevel,
           checkallow: t.forcecheck,
           force2fa : t.force2fa,
+          allowdeny : t.allowdeny,
+          allowedcidrs : t.allowedcidrs.split(","),
+          deniedcidrs : t.deniedcidrs.split(","),
           maxautologin2fa : parseInt(t.maxautologin, 10)
         };
         this.$.gatewaysaver.xhrArgs = {
@@ -85,10 +88,15 @@
       },
       gatewayLoaded : function (rsp, det) {
         var dat = det.response;
+        var all = dat.allowedcidrs || [];
+        var den = dat.deniedcidrs || [];
         var t = this.getTab();
         t.loglevel = dat.loglevel;
         t.forcecheck = dat.checkAllow;
         t.force2fa = dat.force2fa;
+        t.allowdeny = dat.allowdeny;
+        t.allowedcidrs = all.join(","),
+        t.deniedcidrs = den.join(","),
         t.maxautologin = parseInt(dat.maxautologin2fa,10);
         t.updateText(dat.hostkey);
       },

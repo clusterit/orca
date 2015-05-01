@@ -39,7 +39,7 @@ var (
 	revision      = "latest"
 )
 
-func init() {
+func initGateway() {
 	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
 	viper.SetDefault("bind", ":2022")
@@ -182,6 +182,7 @@ func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, erro
 }
 
 func main() {
+	initGateway()
 	initWithSettings(zone)
 
 	bind := viper.GetString("bind")

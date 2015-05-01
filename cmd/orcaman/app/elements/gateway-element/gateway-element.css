@@ -31,6 +31,11 @@ core-pages {
   border: 1px solid #ddd;
 }
 
+.settingscard .cidr {
+  padding: 5px;
+  border: 1px solid #ddd;
+}
+
 textarea {
   font-family: monospace;
   color: #aaa;

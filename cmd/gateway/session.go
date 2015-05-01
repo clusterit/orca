@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/logging"
 
 	"golang.org/x/crypto/ssh"
@@ -117,6 +118,11 @@ func NewSession(sshConn *ssh.ServerConn, chans <-chan ssh.NewChannel, reqs <-cha
 		sshConn.Close()
 		return nil, err
 	}
+	err = checkBackendAccess(cs.remoteHost, *configuration)
+	if err != nil {
+		sshConn.Close()
+		return nil, err
+	}
 	remote := sshConn.RemoteAddr().String()
 	sid := fmt.Sprintf("%x", sshConn.SessionID())
 	cs.logger = logging.New(sid, remote)
@@ -215,6 +221,7 @@ func (cs *clientSession) forward(rq *ssh.Request, global bool) error {
 		return cs.forwardRequest(rq)
 	}
 }
+
 func (cs *clientSession) connectToBackend(backend string, user string, ag agent.Agent) (*backendClient, error) {
 	sshConfig := &ssh.ClientConfig{
 		User: user,
@@ -414,4 +421,66 @@ func dial(network, addr string, config *ssh.ClientConfig) (*backendClient, error
 		return nil, err
 	}
 	return newClient(c, chans, reqs), err
+}
+
+func checkBackendAccess(address string, cfg config.Gateway) error {
+	ips, err := net.LookupIP(address)
+	if err != nil {
+		return err
+	}
+	var allowed []*net.IPNet
+	var denied []*net.IPNet
+	for _, a := range cfg.AllowedCidrs {
+		_, netw, err := net.ParseCIDR(a)
+		if err == nil {
+			allowed = append(allowed, netw)
+		} else {
+			logger.Warnf("the allowed CIDR %s cannot be parsed, ignoring", a)
+		}
+	}
+	for _, a := range cfg.DeniedCidrs {
+		_, netw, err := net.ParseCIDR(a)
+		if err == nil {
+			denied = append(denied, netw)
+		} else {
+			logger.Warnf("the denied CIDR %s cannot be parsed, ignoring", a)
+		}
+	}
+
+	a := checkNetContains(allowed, ips)
+	d := checkNetContains(denied, ips)
+
+	if cfg.AllowDeny {
+		// if it is allowed
+		if a {
+			// and not denied
+			if !d {
+				// allow it
+				return nil
+			}
+		}
+
+		return fmt.Errorf("AD: %s is not allowed: allowd:%v, denied:%v", address, a, d)
+	}
+
+	if d {
+		// if it is denied, deny it
+		if a {
+			// except it is allowed
+			return nil
+		}
+		return fmt.Errorf("DA: %s is not allowed: allowd:%v, denied:%v", address, a, d)
+	}
+	return nil
+}
+
+func checkNetContains(nets []*net.IPNet, ips []net.IP) bool {
+	for _, nw := range nets {
+		for _, ip := range ips {
+			if nw.Contains(ip) {
+				return true
+			}
+		}
+	}
+	return false
 }

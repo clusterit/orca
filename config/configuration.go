@@ -23,11 +23,14 @@ type ManagerConfig struct {
 type NewManagerConfig <-chan ManagerConfig
 
 type Gateway struct {
-	Force2FA        bool   `json:"force2fa"`
-	HostKey         string `json:"hostkey"`
-	LogLevel        string `json:"loglevel"`
-	CheckAllow      bool   `json:"checkAllow"`
-	MaxAutologin2FA int    `json:"maxautologin2fa"`
+	Force2FA        bool     `json:"force2fa"`
+	HostKey         string   `json:"hostkey"`
+	LogLevel        string   `json:"loglevel"`
+	CheckAllow      bool     `json:"checkAllow"`
+	MaxAutologin2FA int      `json:"maxautologin2fa"`
+	AllowedCidrs    []string `json:"allowedcidrs"`
+	DeniedCidrs     []string `json:"deniedcidrs"`
+	AllowDeny       bool     `json:"allowdeny"`
 }
 
 type NewGateway <-chan Gateway
@@ -174,9 +177,12 @@ func GenerateGateway() (*Gateway, error) {
 	}
 	data := pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pk)}
 	return &Gateway{
-		HostKey:    string(pem.EncodeToMemory(&data)),
-		LogLevel:   logging.Debug,
-		CheckAllow: true,
+		HostKey:      string(pem.EncodeToMemory(&data)),
+		LogLevel:     logging.Debug,
+		CheckAllow:   true,
+		AllowDeny:    true,
+		AllowedCidrs: []string{"0.0.0.0/0"},
+		DeniedCidrs:  []string{"127.0.0.1/8"},
 	}, nil
 }
 
