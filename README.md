@@ -53,36 +53,6 @@ TODO: dockerize the build
 Please install [etcd](https://github.com/coreos/etcd) and start a cluster; a
 single machine cluster is ok.
 
-`orcaman` uses an external Oauth provider to authenticate. So first of all, please
-register a new application with your github account, navigate to your settings
-[and register a new application](https://github.com/settings/applications/new). Enter
-*Orca local* as name and *http://localhost:9011* as homepage URL. The redirect
-url should be *http://localhost:9011/redirect.html*. Now click on `Update Application`
-and you will get a `Client ID` and a `Client Secret`. As the name says, keep the
-secret in a secret place :-).
-
-Now start `orcaman` and register a oauth provider (at this time, `orca` knows
-the settings for *github* and *google*):
-```
-orcaman provider github <your-clientid> <your-clientsecret>
-2015/04/18 16:04:03 [DEBUG] no zones existing, creating zone 'intranet'.
-2015/04/18 16:04:06 [DEBUG] create a default gatway setting
-2015/04/18 16:04:07 [DEBUG] create a default ManagerConfig setting
-(*oauth.OauthRegistration)(0xc208070420)({
- Network: (string) (len=6) "github",
- ClientId: (string) (len=20) "<your-clientid>",
- ClientSecret: (string) (len=40) "<your-clientsecret>",
- Scopes: (string) (len=10) "user:email",
- AuthUrl: (string) (len=40) "https://github.com/login/oauth/authorize",
- AccessTokenUrl: (string) (len=43) "https://github.com/login/oauth/access_token",
- UserinfoUrl: (string) (len=27) "https://api.github.com/user",
- PathId: (string) (len=5) "login",
- PathName: (string) (len=4) "name",
- PathPicture: (string) (len=10) "avatar_url",
- PathCover: (string) ""
-})
-```
-
 If your `etcd` cluster is not accessible via `http://localhost:4001` you can
 specify a different location via the `-e ...` flag. You can also name your
 zone with `-z myhomezone`.
@@ -105,6 +75,36 @@ zone with `-z myhomezone`.
  export ORCA_ETCD_KEY=`pwd`/ssl/client.key
  export ORCA_ETCD_CERT=`pwd`/ssl/client.cert
  ```
+ 
+`orcaman` uses an external Oauth provider to authenticate. So first of all, please
+register a new application with your github account, navigate to your settings
+[and register a new application](https://github.com/settings/applications/new). Enter
+*Orca local* as name and *http://localhost:9011* as homepage URL. The redirect
+url should be *http://localhost:9011/redirect.html*. Now click on `Update Application`
+and you will get a `Client ID` and a `Client Secret`. As the name says, keep the
+secret in a secret place :-).
+
+Start `orcaman` and register a oauth provider (at this time, `orca` knows
+the settings for *github* and *google*):
+```
+orcaman provider github <your-clientid> <your-clientsecret>
+2015/04/18 16:04:03 [DEBUG] no zones existing, creating zone 'intranet'.
+2015/04/18 16:04:06 [DEBUG] create a default gatway setting
+2015/04/18 16:04:07 [DEBUG] create a default ManagerConfig setting
+(*oauth.OauthRegistration)(0xc208070420)({
+ Network: (string) (len=6) "github",
+ ClientId: (string) (len=20) "<your-clientid>",
+ ClientSecret: (string) (len=40) "<your-clientsecret>",
+ Scopes: (string) (len=10) "user:email",
+ AuthUrl: (string) (len=40) "https://github.com/login/oauth/authorize",
+ AccessTokenUrl: (string) (len=43) "https://github.com/login/oauth/access_token",
+ UserinfoUrl: (string) (len=27) "https://api.github.com/user",
+ PathId: (string) (len=5) "login",
+ PathName: (string) (len=4) "name",
+ PathPicture: (string) (len=10) "avatar_url",
+ PathCover: (string) ""
+})
+```
   
 Next, register an admin account. Prefix your account with the name of the provider
 you used in the previous step:
