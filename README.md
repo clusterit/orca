@@ -87,6 +87,16 @@ If your `etcd` cluster is not accessible via `http://localhost:4001` you can
 specify a different location via the `-e ...` flag. You can also name your
 zone with `-z myhomezone`.
 
+ In a production you should use an `etcd` cluster with `https` and client
+ certificates. You can specifiy the clustermembers with `-e https://<etcd-member>` 
+ and also specify the `--etcdkey`, `--etcdcert` (key and cert of the client) and 
+ `--etcdca` (the cert of the rootca; not necessarily needed). Another option are the
+ environment variables:
+  - ORCA_ETCD_MACHINES
+  - ORCA_ETCD_KEY
+  - ORCA_ETCD_CERT
+  - ORCA_ETCD_CA
+  
 Next, register an admin account. Prefix your account with the name of the provider
 you used in the previous step:
 
