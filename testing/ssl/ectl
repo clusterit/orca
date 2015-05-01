@@ -1,0 +1,3 @@
+#!/bin/sh
+
+etcdctl -C https://127.0.0.1:4001 --key-file client.key --cert-file client.crt --ca-file ca.crt $*

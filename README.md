@@ -96,7 +96,7 @@ zone with `-z myhomezone`.
   - ORCA_ETCD_KEY
   - ORCA_ETCD_CERT
   - ORCA_ETCD_CA
-  
+
  If you want a testdrive, start an etcd-cluster with `goreman start` in the testing
  subdirectory. You can then
  ```
@@ -141,8 +141,11 @@ If you try to connect to a known computer via the gateway, you should try it
 (please accept the server key; you can change it via `orcaman`):
 ```
 ssh -A -p 2022 usc@192.168.0.21@localhost
+usc@192.168.0.21@localhost's password:
 ```
-but the gateway denies access:
+but the gateway denies access and prompts for a password (which will also not be
+accepted):
+
 ```
 2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: cannot fetch key for user 'usc@192.168.0.21': HTTP 404: {"error":"entity could not be found"}
 2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: cannot fetch key for user 'usc@192.168.0.21': HTTP 404: {"error":"entity could not be found"}
@@ -151,7 +154,7 @@ but the gateway denies access:
 ```
 
 Here you see three attempts to login, because i have three keys in my local
-development computer here. Two of the attepmts  were not accepted because the 
+development computer here (ssh-add'ed). Two of the attepmts  were not accepted because the 
 gateway could not find an acceptable user for the provided public key. The third
 was denied, because the account is not activated, so lets activate it for 1 hour:
 
@@ -171,6 +174,26 @@ selected zone. You don't have to restart:
 
 ![Gateway Settings](doc/img/gateway_settings.png)
 
+As you have seen, the gatway also supports 2FA. To use this feature you need a
+OTP app on your mobile. Links to them are embedded in the application. After you
+installed such an application, go to your account page and lick on *ENABLE*:
+
+![2FA Enable](doc/img/2fa_user_enable.png)
+
+After you scanned the QR code you must enter an OTP password displayed on your
+OTP application. If you entered the right one you have successfully activated
+2FA!
+
+![2FA Enable](doc/img/2fa_user_settings.png)
+
+After this activation, you need your private SSH key and you also need your
+mobile. The SSH gateway will prompt you for a password and you must enter
+the current one time password displayed in your app.
+
+As you can see in the screenshot, there is a caching option. If you don't want
+to enter your OTP every time you can use the slider to let the gateway cache 
+your successful authentication. Please note that the administrator of the gateway
+can overwrite this value with an upper limit! 
 
 ## Components
 ----------

@@ -99,7 +99,7 @@ func (hf *httpFetcher) UserByKey(zone, key string) (*users.User, error) {
 			continue
 		}
 		if resp.Status() != 200 {
-			return nil, fmt.Errorf("HTTP %d: %s", resp.Status(), resp.RawText())
+			return nil, fmt.Errorf("%s: HTTP %d: %s", serviceUrl, resp.Status(), resp.RawText())
 		}
 		return &u, nil
 	}
