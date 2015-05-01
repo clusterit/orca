@@ -97,6 +97,15 @@ zone with `-z myhomezone`.
   - ORCA_ETCD_CERT
   - ORCA_ETCD_CA
   
+ If you want a testdrive, start an etcd-cluster with `goreman start` in the testing
+ subdirectory. You can then
+ ```
+ cd testing
+ export ORCA_ETCD_MACHINES=https://localhost:4001,https://localhost:4002,https://localhost:4003
+ export ORCA_ETCD_KEY=`pwd`/ssl/client.key
+ export ORCA_ETCD_CERT=`pwd`/ssl/client.cert
+ ```
+  
 Next, register an admin account. Prefix your account with the name of the provider
 you used in the previous step:
 
