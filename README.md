@@ -28,7 +28,7 @@ backbone to store all the public keys.
 
 ## Install/Build
 
-To build `orca` you need `make` and `bower` and well ... `go` :-).
+To build `orca` you need `make` `bower` and `go`.
 
 Create a new workspace in your home and execute the included `setup.sh`. You do not
 need to clone before, the `setup.sh` clones:
