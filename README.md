@@ -138,7 +138,7 @@ gateway
 ```
 
 If you want to connect to a known computer via the gateway, you should first
-add your key's to your agent:
+add your keys to your agent:
 ```
 ssh-add
 ```
