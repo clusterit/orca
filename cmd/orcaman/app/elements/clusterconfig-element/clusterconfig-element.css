@@ -17,3 +17,20 @@
   font-variant:small-caps;
   font-size: 0.9em;
 }
+
+.zoneelement {
+  padding: 5px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+
+#zonelist {
+  margin: 20px;
+ 
+}
+
+#addzone {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}

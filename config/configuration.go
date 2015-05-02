@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"time"
 
+	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/etcd"
 	"github.com/clusterit/orca/logging"
 	cetcd "github.com/coreos/go-etcd/etcd"
@@ -89,7 +90,7 @@ func (e *etcdConfig) CreateZone(zone string) error {
 }
 
 func (e *etcdConfig) DropZone(zone string) error {
-	return e.persister.Remove(e.pt(zone, ""))
+	return e.persister.RemoveDir(e.pt(zone, ""))
 }
 
 func (e *etcdConfig) PutManagerConfig(zone string, mc ManagerConfig) error {
@@ -197,4 +198,45 @@ func GenerateManagerConfig() (*ManagerConfig, error) {
 	return &ManagerConfig{
 		Key: string(pem.EncodeToMemory(&data)),
 	}, nil
+}
+
+func InitZone(cfger Configer, zone string, createGateway, createMc bool) (*Gateway, *ManagerConfig, error) {
+	var myMc *ManagerConfig
+	var myGateway *Gateway
+	if createGateway {
+		gw, err := cfger.GetGateway(zone)
+		if common.IsNotFound(err) {
+			gw, err := GenerateGateway()
+			if err != nil {
+				return nil, nil, err
+			}
+			if err = cfger.PutGateway(zone, *gw); err != nil {
+				return nil, nil, err
+			}
+			myGateway = gw
+		} else if err != nil {
+			return nil, nil, err
+		} else {
+			myGateway = gw
+		}
+	}
+	if createMc {
+		mcf, err := cfger.GetManagerConfig(zone)
+		if common.IsNotFound(err) {
+			mcf, err := GenerateManagerConfig()
+			if err != nil {
+				return nil, nil, err
+			}
+			if err = cfger.PutManagerConfig(zone, *mcf); err != nil {
+				return nil, nil, err
+			}
+			myMc = mcf
+		} else if err != nil {
+			return nil, nil, err
+		} else {
+			myMc = mcf
+		}
+	}
+
+	return myGateway, myMc, nil
 }

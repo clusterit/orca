@@ -3,9 +3,9 @@
 <polymer-element name="clusterconfig-element" attributes="apiBase user">
   <template>
     <link rel="stylesheet" href="clusterconfig-element.css">
-    <div class="settingscard" fit>
+    <div class="settingscard" layout vertical fit>
       <div center horizontal layout>
-        <div class="label" flex>
+        <div class="label" >
           <div class="labeltext">Clustername</div>
           <div class="labelhelp">
             The name of this orca cluster. If you decide to use 2FA this name
@@ -16,14 +16,44 @@
         </div>
         <paper-input label="Clustername" value="{{config.name}}"></paper-input>
       </div>
-      
+      <div id="zones" vertical layout flex >
+        <div class="label">
+          <div class="labeltext">Zones</div>
+          <div class="labelhelp">
+            The list of configured zones. Every zone is contains a key for the
+            gateway service, settings for 2FA, etc. You can configure multiple 
+            zones and start a gateway instance for every zone.</div>
+        </div>
+        <core-list data="{{zones}}" flex id="zonelist">
+          <template>
+            <div horizontal layout center class="zoneelement">
+              <div class="zone" flex>{{model.name}}</div>
+              <div class="zoneactions">
+                <paper-icon-button icon="clear" on-tap="{{showDeleteZone}}"></paper-icon-button>
+              </div>
+            </div>
+          </template>
+        </core-list>
+        <paper-fab id="addzone" icon="add" title="create" on-tap="{{showAddZone}}"></paper-fab>
+      </div>
     </div>
+    <paper-action-dialog backdrop id="deletezonedlg" heading="Delete">
+      <p>Delete the zone '{{removezone}}' ?</p>
+      <paper-button affirmative on-tap="{{deleteZone}}">Yes</paper-button>
+      <paper-button affirmative autofocus>No</paper-button>
+    </paper-action-dialog>
+    <paper-dialog backdrop id="addzonedlg" heading="Zone" >
+      <div><paper-input label="Zone name" id="zid" value="{{newzone}}"></paper-input></div>
+      <div horizontal layout end-justified><paper-button affirmative autofocus on-tap="{{addZone}}">Save</paper-button></div>
+    </paper-dialog>
+    
     <core-ajax
       id="ccloader"
       method="GET"
       url="{{apiBase}}/configuration/cluster"
       handleAs="json"
       headers='{"Authorization":"{{user.token}}"}'
+      on-core-error="{{showError}}"
       response="{{config}}"></core-ajax>
     <core-ajax
       id="ccsaver"
@@ -32,23 +62,76 @@
       handleAs="json"
       contentType="application/json"
       headers='{"Authorization":"{{user.token}}"}'
+      on-core-error="{{showError}}"
       response="{{configLoaded}}"></core-ajax>
+    <core-ajax
+      id="zonesloader"
+      method="GET"
+      url="{{apiBase}}/configuration/zones"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{showError}}"
+      on-core-response="{{zonesLoaded}}"></core-ajax>      
+    <core-ajax
+      id="zonecreator"
+      method="PUT"
+      url="{{apiBase}}/configuration/zone/{{newzone}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{showError}}"
+      on-core-response="{{ajaxReady}}"></core-ajax>      
+    <core-ajax
+      id="zonedeleter"
+      method="DELETE"
+      url="{{apiBase}}/configuration/zone/{{removezone}}"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-error="{{showError}}"
+      on-core-response="{{ajaxReady}}"></core-ajax>      
   </template>
   <script>
     Polymer({
       config: null,
+      zones: [],
+      removezone:"",
+      newzone:"",
       
       ready : function () {
       },
+      showError : function (rsp, det) {
+        this.fire("error",det.response.response.error)
+      },
+      ajaxReady : function () {
+        this.$.ccloader.go();
+        this.$.zonesloader.go();
+      },
       clicked : function () {
         this.$.ccloader.go();
+        this.$.zonesloader.go();
       },
-      doSave : function () {
-        this.$.ccsaver.xhrArgs = {
-          body : JSON.stringify(this.config)
-        };
-        this.$.ccsaver.go();
+      zonesLoaded : function (rsp, det) {
+        this.zones = det.response.map(function (z) {
+          return { name:z};
+        });
+        this.$.deletezonedlg.close();
+        this.$.addzonedlg.close();
       },
+      showDeleteZone : function (evt) {
+        var e = evt.target.templateInstance.model.model;
+        this.removezone = e.name;
+        this.$.deletezonedlg.toggle();
+        evt.stopPropagation();
+      },
+      deleteZone : function () {
+        this.$.zonedeleter.go();
+      },      
+      showAddZone : function () {
+        this.newzone = "";
+        this.$.addzonedlg.toggle();
+      },
+      addZone : function () {
+        this.$.zonecreator.go();
+      }
     });
   </script>
 </polymer-element>

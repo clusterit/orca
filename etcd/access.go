@@ -148,6 +148,7 @@ type Persister interface {
 	Get(k string, v interface{}) error
 	GetAll(sorted, recursive bool, v interface{}) error
 	Remove(k string) error
+	RemoveDir(k string) error
 	Chdir(p string) Persister
 	Ls(p string) ([]string, error)
 	RawClient() *etcd.Client
@@ -269,5 +270,10 @@ func (jp *jsonPersister) GetAll(sorted, recursive bool, res interface{}) error {
 // Remove the value at position k.
 func (jp *jsonPersister) Remove(k string) error {
 	_, e := jp.cc.client.Delete(jp.path(k), false)
+	return e
+}
+
+func (jp *jsonPersister) RemoveDir(k string) error {
+	_, e := jp.cc.client.RawDelete(jp.path(k), true, true)
 	return e
 }

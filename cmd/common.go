@@ -61,44 +61,5 @@ func ForceZone(cfger config.Configer, zone string, createGateway, createMc bool)
 			}
 		}
 	}
-	var myMc *config.ManagerConfig
-	var myGateway *config.Gateway
-	if createGateway {
-		gw, err := cfger.GetGateway(zone)
-		if common.IsNotFound(err) {
-			gw, err := config.GenerateGateway()
-			if err != nil {
-				return nil, nil, err
-			}
-			logger.Debugf("create a default gatway setting")
-			if err = cfger.PutGateway(zone, *gw); err != nil {
-				return nil, nil, err
-			}
-			myGateway = gw
-		} else if err != nil {
-			return nil, nil, err
-		} else {
-			myGateway = gw
-		}
-	}
-	if createMc {
-		mcf, err := cfger.GetManagerConfig(zone)
-		if common.IsNotFound(err) {
-			mcf, err := config.GenerateManagerConfig()
-			if err != nil {
-				return nil, nil, err
-			}
-			logger.Debugf("create a default ManagerConfig setting")
-			if err = cfger.PutManagerConfig(zone, *mcf); err != nil {
-				return nil, nil, err
-			}
-			myMc = mcf
-		} else if err != nil {
-			return nil, nil, err
-		} else {
-			myMc = mcf
-		}
-	}
-
-	return myGateway, myMc, nil
+	return config.InitZone(cfger, zone, createGateway, createMc)
 }

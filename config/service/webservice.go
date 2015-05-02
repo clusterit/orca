@@ -55,7 +55,7 @@ func (t *ConfigService) Register(root string, c *restful.Container) {
 		Reads(config.Gateway{}))
 	ws.Route(ws.GET("/{zone}/gateway").To(mgr(t.getGateway)).
 		Doc("Get the Gateway config for a given zone").
-		Param(ws.PathParameter("zone", "the zone to reamd the JWT from").DataType("string")).
+		Param(ws.PathParameter("zone", "the zone to read the JWT from").DataType("string")).
 		Operation("getGateway").
 		Writes(config.Gateway{}))
 	ws.Route(ws.GET("/zones").To(mgr(t.getZones)).
@@ -65,6 +65,16 @@ func (t *ConfigService) Register(root string, c *restful.Container) {
 	ws.Route(ws.GET("/zone").To(t.getZone).
 		Doc("Get the current zone").
 		Operation("getZone").
+		Writes(""))
+	ws.Route(ws.PUT("/zone/{zone}").To(mgr(t.putZone)).
+		Doc("Create a new zone").
+		Param(ws.PathParameter("zone", "the zone to create").DataType("string")).
+		Operation("putZone").
+		Writes(""))
+	ws.Route(ws.DELETE("/zone/{zone}").To(mgr(t.deleteZone)).
+		Doc("Drop a zone").
+		Param(ws.PathParameter("zone", "the zone to create").DataType("string")).
+		Operation("deleteZone").
 		Writes(""))
 
 	c.Add(ws)
@@ -76,6 +86,30 @@ func (t *ConfigService) getZones(u *users.User, rq *restful.Request, rsp *restfu
 
 func (t *ConfigService) getZone(rq *restful.Request, rsp *restful.Response) {
 	rest.HandleEntity(t.Zone, nil)(rq, rsp)
+}
+
+func (t *ConfigService) putZone(u *users.User, rq *restful.Request, rsp *restful.Response) {
+	z := rq.PathParameter("zone")
+	if err := t.Config.CreateZone(z); err != nil {
+		rest.HandleError(err, rsp)
+		return
+	}
+	_, _, err := config.InitZone(t.Config, z, true, true)
+	if err != nil {
+		t.Config.DropZone(z)
+		rest.HandleError(err, rsp)
+		return
+	}
+	rsp.WriteEntity(z)
+}
+
+func (t *ConfigService) deleteZone(u *users.User, rq *restful.Request, rsp *restful.Response) {
+	z := rq.PathParameter("zone")
+	if err := t.Config.DropZone(z); err != nil {
+		rest.HandleError(err, rsp)
+		return
+	}
+	rsp.WriteEntity(z)
 }
 
 func (t *ConfigService) putManagerConfig(u *users.User, rq *restful.Request, rsp *restful.Response) {
