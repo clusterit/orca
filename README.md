@@ -181,7 +181,7 @@ selected zone. You don't have to restart:
 
 As you have seen, the gatway also supports 2FA. To use this feature you need a
 OTP app on your mobile. Links to them are embedded in the application. After you
-installed such an application, go to your account page and lick on *ENABLE*:
+installed such an application, go to your account page and click on *ENABLE*:
 
 ![2FA Enable](doc/img/2fa_user_enable.png)
 
