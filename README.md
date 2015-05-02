@@ -137,8 +137,13 @@ gateway
 2015/04/18 16:55:07 [INFO] gateway listens on "[::]:2022" ...
 ```
 
-If you try to connect to a known computer via the gateway, you should try it 
-(please accept the server key; you can change it via `orcaman`):
+If you want to connect to a known computer via the gateway, you should first
+add your key's to your agent:
+```
+ssh-add
+```
+After that you can try to login (please accept the server key; you can change 
+it via `orcaman`):
 ```
 ssh -A -p 2022 usc@192.168.0.21@localhost
 usc@192.168.0.21@localhost's password:
