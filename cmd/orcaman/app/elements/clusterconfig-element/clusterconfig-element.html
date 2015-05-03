@@ -98,6 +98,12 @@
       
       ready : function () {
       },
+      doSave : function () {
+        this.$.ccsaver.xhrArgs = {
+          body : JSON.stringify(this.config)
+        };
+        this.$.ccsaver.go();
+      },
       showError : function (rsp, det) {
         this.fire("error",det.response.response.error)
       },

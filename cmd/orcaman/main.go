@@ -20,7 +20,6 @@ import (
 	"gopkg.in/emicklei/go-restful.v1"
 
 	"github.com/clusterit/orca/auth"
-	_ "github.com/clusterit/orca/auth/google"
 	"github.com/clusterit/orca/auth/oauth"
 	uetcd "github.com/clusterit/orca/users/etcd"
 
