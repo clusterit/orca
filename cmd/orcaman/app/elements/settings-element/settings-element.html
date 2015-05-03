@@ -13,7 +13,7 @@
             </div>
             <div class="topspace">Allow key-only login after a successful TOTP authentication for the next</div>
             <div>
-              <paper-slider id="autlogin2fa" pin snaps max="10" step="1" value="{{autologin}}" ></paper-slider>
+              <paper-slider id="autlogin2fa" pin snaps max="10" step="1" value="{{autologin}}" on-change="{{autologinSliderChanged}}"></paper-slider>
             </div>
             <div><b><span>{{autologin}}</span></b> hours. </div>
           </template>
@@ -119,8 +119,8 @@
         if (newv)
           this.autologin = newv.autologinafter2FA / 3600;
       },
-      autologinChanged : function (oldv, newv) {
-        this.autologinSecs = newv*3600;
+      autologinSliderChanged : function (evt, det) {
+        this.autologinSecs = this.autologin*3600;
         this.$.autologin2fa.go();
       },
       show2FA : function () {
