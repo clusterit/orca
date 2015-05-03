@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clusterit/orca/logging"
+
 	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/etcd"
 	. "github.com/clusterit/orca/users"
@@ -21,6 +23,10 @@ const (
 	keysPath   = "/keys"
 	permitPath = "/permit"
 	twofaPath  = "/2fa"
+)
+
+var (
+	logger = logging.Simple()
 )
 
 type etcdUsers struct {
@@ -229,6 +235,7 @@ func (eu *etcdUsers) Update(uid, username string, rolz Roles) (*User, error) {
 
 func (eu *etcdUsers) Permit(a Allowance, ttlSecs uint64) error {
 	if ttlSecs == 0 {
+		logger.Infof("remove allowance for %s", a.Uid)
 		return eu.pm.Remove(a.Uid)
 	}
 	a.Until = time.Now().UTC().Add(time.Second * time.Duration(ttlSecs))

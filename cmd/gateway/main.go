@@ -171,7 +171,11 @@ func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, erro
 		return nil, fmt.Errorf("no key auth happend before OTP check")
 	}
 	usr := keyusr.(*users.User)
-	err := fetcher.CheckToken(zone, usr.Id, string(password), configuration.MaxAutologin2FA)
+	ttl := usr.AutologinAfter2FA
+	if ttl > configuration.MaxAutologin2FA {
+		ttl = configuration.MaxAutologin2FA
+	}
+	err := fetcher.CheckToken(zone, usr.Id, string(password), ttl)
 	if err != nil {
 		Log(logging.Debug, "remote: %s: wrong token for user '%s': '%s'", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
