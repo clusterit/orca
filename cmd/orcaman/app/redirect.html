@@ -2,6 +2,35 @@
 <head>
 </head>
 <body>
-	<script src="bower_components/hello/dist/hello.all.min.js"></script>
+	<script>
+	  // First, parse the query string
+    var params = {}, queryString = location.search.substring(1),
+        regex = /([^&=]+)=([^&]*)/g, m;
+    while (m = regex.exec(queryString)) {
+      params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+    }
+    
+    var req = new XMLHttpRequest();
+    var cbid = JSON.parse(params.state).cbid;
+    req.open('GET', '/remote/api/auth/oauth?code='+params.code+"&state="+params.state, true);
+    
+    req.onreadystatechange = function (e) {
+      if (req.readyState == 4) {
+        if(req.status == 200){
+           var tok = req.getResponseHeader("orca-token");
+           window.opener[cbid](tok);
+           window.close();
+        }
+        else if(req.status == 400) {
+            alert('There was an error processing the access code.')
+        }
+        else {
+          alert('something else other than 200 was returned')
+        }
+      }
+    };
+    req.send(null);
+
+	</script>
 </body>
 </html>

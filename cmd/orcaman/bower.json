@@ -16,7 +16,6 @@
     "paper-shadow": "polymer/paper-shadow#~0.5.5",
     "google-signin": "GoogleWebComponents/google-signin#~0.2.1",
     "paper-icon-button": "polymer/paper-icon-button#~0.5.5",
-    "hello": "MrSwitch/hello.js#~1.5.0",
     "core-scaffold": "polymer/core-scaffold#~0.5.5",
     "core-toolbar": "polymer/core-toolbar#~0.5.5",
     "core-menu": "polymer/core-menu#~0.5.5",

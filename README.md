@@ -200,6 +200,23 @@ to enter your OTP every time you can use the slider to let the gateway cache
 your successful authentication. Please note that the administrator of the gateway
 can overwrite this value with an upper limit! 
 
+## Oauth Providers
+
+To register new OAuth providers, you can use predefined ones (`google`, `github`)
+or you can insert the values you want. Here are some templates for given 
+oauth servers:
+
+### Gitlab
+ - name: `gitlab` 
+ - clientid/clientsecret: generate via Gitlab Admin UI
+ - scopes: empty
+ - Auth Url: `<yourgitlabserver>/oauth/authorize`
+ - Access Token Url: `<yourgitlabserver>/oauth/token`
+ - Userinfo Url: `<yourgitlabserver>/api/v3/user`
+ - Path Id: `username`
+ - Path Name: `name`
+ - Path Picture: `avatar_url`
+
 ## Components
 ----------
 `orca` has the different components, one for the ssh gateway, another for the management

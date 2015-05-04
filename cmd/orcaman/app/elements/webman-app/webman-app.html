@@ -166,7 +166,6 @@
       },
       userNotLoadable : function (rsp, detail) {
         this.showError("Userdata cannot be loaded: "+detail.response.response.error);
-        this.$.login.logout();
       },
       doSave : function () {
         var pgname = this.menuItems[this.appPage].target;

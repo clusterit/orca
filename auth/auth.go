@@ -3,7 +3,6 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
-	"net/url"
 
 	"github.com/clusterit/orca/rest"
 
@@ -73,7 +72,6 @@ func (t *AutherService) Register(root string, c *restful.Container) {
 		Doc("create a new access token").
 		Param(ws.FormParameter("state", "the state field of the client").DataType("string")).
 		Param(ws.FormParameter("code", "the code sent from the oauth provider").DataType("string")).
-		Param(ws.FormParameter("redirect_uri", "the redirect URI").DataType("string")).
 		Returns(200, "OK", AuthUser{}).
 		Operation("createTokenFromCode"))
 	ws.Route(ws.GET("/user").To(t.getAuth).
@@ -86,28 +84,21 @@ func (t *AutherService) Register(root string, c *restful.Container) {
 }
 
 func (t *AutherService) createTokenFromCode(rq *restful.Request, rsp *restful.Response) {
-	parms := rq.Request.URL.Query()
 	state := rq.QueryParameter("state")
 	code := rq.QueryParameter("code")
-	redirUri := rq.QueryParameter("redirect_uri")
 	res := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(state), &res); err != nil {
 		rsp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
 	network := res["network"].(string)
-	tk, oauthtk, _, err := t.Auth.Create(network, code, parms.Get("redirect_uri"))
+	redir_uri := res["redirect_uri"].(string)
+	tk, _, _, err := t.Auth.Create(network, code, redir_uri)
 	if err != nil {
 		rsp.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	redirVals := make(url.Values)
-	for k, v := range oauthtk {
-		redirVals.Add(k, v)
-	}
-	redirVals.Add("orca", tk)
-	redir := redirUri + "?" + redirVals.Encode() + "&state=" + state
-	http.Redirect(rsp.ResponseWriter, rq.Request, redir, http.StatusTemporaryRedirect)
+	rsp.AddHeader("orca-token", tk)
 }
 
 // Get the AuthUser from the JWT token.
