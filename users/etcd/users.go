@@ -132,9 +132,19 @@ func (eu *etcdUsers) Get(id string) (*User, error) {
 	// we have an alias for our intenal id too, so the
 	// next lookup must always succeed if the user exists
 	if err := eu.al.Get(id, &realid); err != nil {
+		if cerr, ok := err.(*goetcd.EtcdError); ok {
+			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
+				return nil, common.ErrNotFound
+			}
+		}
 		return nil, err
 	}
 	if err := eu.up.Get(realid, &u); err != nil {
+		if cerr, ok := err.(*goetcd.EtcdError); ok {
+			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
+				return nil, common.ErrNotFound
+			}
+		}
 		return nil, err
 	}
 	if err := eu.pm.Get(realid, &a); err == nil {

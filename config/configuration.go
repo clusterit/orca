@@ -24,6 +24,7 @@ type ManagerConfig struct {
 type NewManagerConfig <-chan ManagerConfig
 
 type Gateway struct {
+	DefaultHost     string   `json:"defaulthost"`
 	Force2FA        bool     `json:"force2fa"`
 	HostKey         string   `json:"hostkey"`
 	LogLevel        string   `json:"loglevel"`
@@ -39,7 +40,8 @@ type NewGateway <-chan Gateway
 type Stop chan bool
 
 type ClusterConfig struct {
-	Name string `json:"name"`
+	Name         string `json:"name"`
+	SelfRegister bool   `json:"selfregister"`
 }
 
 type Configer interface {

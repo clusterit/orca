@@ -1,6 +1,6 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="gateway-zone" layout vertical attributes="force2fa maxautologin loglevel hostkey forcecheck allowedcidrs deniedcidrs allowdeny">
+<polymer-element name="gateway-zone" layout vertical attributes="force2fa maxautologin loglevel hostkey forcecheck allowedcidrs deniedcidrs allowdeny defaulthost">
   <template>
     <link rel="stylesheet" href="gateway-element.css">
 
@@ -81,6 +81,14 @@
           </paper-dropdown>
         </paper-dropdown-menu>
       </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Defaulthost</div>
+          <div class="labelhelp">Forward the request to this host if the user tries to login direct to the gateway.
+          </div>
+        </div>
+        <paper-input label="Default host" value="{{defaulthost}}"></paper-input>
+      </div>      
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Hostkey</div>

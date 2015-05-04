@@ -16,6 +16,16 @@
         </div>
         <paper-input label="Clustername" value="{{config.name}}"></paper-input>
       </div>
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">Self register</div>
+          <div class="labelhelp">Check this option to register every user who is sucessfully
+          authenticated. Please be careful with this option because every account from
+          the authentication provider automatically has an account in the gateway.
+          </div>
+        </div>
+        <paper-toggle-button class="widget" checked="{{config.selfregister}}"></paper-toggle-button>
+      </div>      
       <div id="zones" vertical layout flex >
         <div class="label">
           <div class="labeltext">Zones</div>

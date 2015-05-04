@@ -390,6 +390,9 @@ func (cs *clientSession) tunnelChannel(ch ssh.Channel, tp string, data []byte) e
 func split(userAtHost string) (string, string, error) {
 	res := strings.Split(userAtHost, "@")
 	if len(res) != 2 {
+		if configuration.DefaultHost != "" {
+			return userAtHost, configuration.DefaultHost, nil
+		}
 		return "", "", fmt.Errorf("unknown target: %s", userAtHost)
 	}
 	return res[0], res[1], nil

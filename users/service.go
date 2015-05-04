@@ -22,9 +22,9 @@ type UsersService struct {
 
 type CheckedUser func(f UserFunction) restful.RouteFunction
 
-func CheckUser(a auth.Auther, u Users, rlz Roles) CheckedUser {
+func CheckUser(a auth.Auther, u Users, rlz Roles, cfg config.Configer) CheckedUser {
 	return func(f UserFunction) restful.RouteFunction {
-		return HasRoles(f, a, u, rlz)
+		return HasRoles(f, a, u, rlz, cfg)
 	}
 }
 
@@ -46,8 +46,8 @@ func (t *UsersService) Shutdown() error {
 }
 
 func (t *UsersService) Register(root string, c *restful.Container) {
-	manager := CheckUser(t.Auth, t.Provider, ManagerRoles)
-	userRoles := CheckUser(t.Auth, t.Provider, UserRoles)
+	manager := CheckUser(t.Auth, t.Provider, ManagerRoles, nil)
+	userRoles := CheckUser(t.Auth, t.Provider, UserRoles, t.Config)
 
 	ws := new(restful.WebService)
 	ws.

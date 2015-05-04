@@ -71,7 +71,8 @@
           allowdeny : t.allowdeny,
           allowedcidrs : t.allowedcidrs.split(","),
           deniedcidrs : t.deniedcidrs.split(","),
-          maxautologin2fa : parseInt(t.maxautologin, 10)
+          maxautologin2fa : parseInt(t.maxautologin, 10),
+          defaulthost : t.defaulthost
         };
         this.$.gatewaysaver.xhrArgs = {
           body : JSON.stringify(gw)
@@ -98,6 +99,7 @@
         t.allowedcidrs = all.join(","),
         t.deniedcidrs = den.join(","),
         t.maxautologin = parseInt(dat.maxautologin2fa,10);
+        t.defaulthost = dat.defaulthost;
         t.updateText(dat.hostkey);
       },
       tabSelected : function (evt, det) {

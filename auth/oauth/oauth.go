@@ -114,7 +114,7 @@ func (t *AuthRegService) Shutdown() {
 
 func (t *AuthRegService) Register(root string, c *restful.Container) {
 
-	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles)
+	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles, nil)
 
 	ws := new(restful.WebService)
 	ws.

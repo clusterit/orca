@@ -22,7 +22,7 @@ func (t *ConfigService) Shutdown() error {
 func (t *ConfigService) Register(root string, c *restful.Container) {
 	ws := new(restful.WebService)
 
-	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles)
+	mgr := users.CheckUser(t.Auth, t.Users, users.ManagerRoles, nil)
 
 	ws.
 		Path(root + "configuration").
