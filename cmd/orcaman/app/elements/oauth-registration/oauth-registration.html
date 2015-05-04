@@ -22,6 +22,10 @@
     <paper-fab id="addreg" icon="add" title="Add" on-tap="{{showAddDialog}}"></paper-fab>
 
     <paper-dialog backdrop id="addregdialog" heading="Add/Update Provider" >
+      <div><paper-radio-group id="authtype">
+        <paper-radio-button name="oauth" label="Oauth"></paper-radio-button>
+        <paper-radio-button name="basic" label="Basic"></paper-radio-button>
+      </paper-radio-group></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Network" id="network" ></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Clientid ID" id="clientid"></paper-input></div>
       <div><paper-input style="width: 100%;font-family: monospace;" label="Client Secret" id="clientsecret"></paper-input></div>
@@ -86,6 +90,7 @@
       },
       editElement : function (evt) {
         var e = evt.target.templateInstance.model.model;
+        this.$.authtype.selected = e.type;
         this.$.network.value = e.network;
         this.$.clientid.value = e.clientid;
         this.$.clientsecret.value = e.clientsecret;
@@ -134,6 +139,7 @@
       },
       addProvider : function () {
         var reg = {
+          type : this.$.authtype.selected,
           network : this.$.network.value,
           clientid: this.$.clientid.value,
           clientsecret: this.$.clientsecret.value,

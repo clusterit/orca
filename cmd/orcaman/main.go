@@ -32,19 +32,20 @@ const (
 )
 
 var (
-	etcdConfig string
-	etcdKey    string
-	etcdCert   string
-	etcdCa     string
-	listen     string
-	clilisten  string
-	publish    string
-	zone       string
-	logger     = logging.Simple()
-	revision   string
-	root       = &cobra.Command{Use: "orcaman"}
-	useweb     bool
-	usecli     bool
+	etcdConfig   string
+	etcdKey      string
+	etcdCert     string
+	etcdCa       string
+	listen       string
+	clilisten    string
+	publish      string
+	zone         string
+	logger       = logging.Simple()
+	revision     string
+	root         = &cobra.Command{Use: "orcaman"}
+	useweb       bool
+	usecli       bool
+	providerType string
 )
 
 var versionCmd = &cobra.Command{
@@ -98,7 +99,7 @@ var provider = &cobra.Command{
 			cm.Help()
 			os.Exit(1)
 		}
-		if reg, err := m.setProvider(args[0], args[1], args[2]); err != nil {
+		if reg, err := m.setProvider(providerType, args[0], args[1], args[2]); err != nil {
 			panic(err)
 		} else {
 			spew.Dump(reg)
@@ -376,8 +377,8 @@ func (rm *restmanager) setAdmins(admins ...string) {
 	}
 }
 
-func (rm *restmanager) setProvider(network, clientid, clientsecret string) (*oauth.AuthRegistration, error) {
-	return rm.oauthreg.Create(network, clientid, clientsecret, "", "", "", "", "", "", "", "")
+func (rm *restmanager) setProvider(tp, network, clientid, clientsecret string) (*oauth.AuthRegistration, error) {
+	return rm.oauthreg.Create(oauth.ProviderType(tp), network, clientid, clientsecret, "", "", "", "", "", "", "", "")
 }
 
 func (rm *restmanager) setConfig(zone string, authurl string, verifyCert bool) error {
@@ -401,6 +402,8 @@ func main() {
 	root.PersistentFlags().StringVar(&clilisten, "clilisten", "", "listen address for the cli endpoint. if empty use the 'listen' address")
 	root.PersistentFlags().BoolVar(&useweb, "useweb", true, "start a web UI with oauth")
 	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
+	provider.Flags().StringVar(&providerType, "providertype", "oauth", "type of the new provider")
+
 	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve, provider)
 	viper.SetEnvPrefix("orca")
 	viper.SetDefault("etcd_machines", "http://localhost:4001")

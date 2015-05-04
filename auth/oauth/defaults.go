@@ -51,6 +51,9 @@ func getDefaults(backend string) AuthRegistration {
 
 func fillDefaults(backend string, reg AuthRegistration) AuthRegistration {
 	def := getDefaults(backend)
+	if reg.Type == "" {
+		reg.Type = def.Type
+	}
 	if reg.Scopes == "" {
 		reg.Scopes = def.Scopes
 	}

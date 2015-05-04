@@ -40,6 +40,8 @@
     "paper-dropdown-menu": "polymer/paper-dropdown-menu#~0.5.5",
     "paper-dropdown": "polymer/paper-dropdown#~0.5.5",
     "core-icon-button": "polymer/core-icon-button#~0.5.5",
-    "paper-slider": "polymer/paper-slider#~0.5.5"
+    "paper-slider": "polymer/paper-slider#~0.5.5",
+    "paper-radio-button": "polymer/paper-radio-button#~0.5.5",
+    "paper-radio-group": "polymer/paper-radio-group#~0.5.5"
   }
 }

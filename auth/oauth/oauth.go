@@ -42,7 +42,7 @@ type LoginProvider struct {
 }
 
 type AuthRegistry interface {
-	Create(network string, clientid, clientsecrect, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error)
+	Create(tp ProviderType, network string, clientid, clientsecrect, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error)
 	Delete(network string) (*AuthRegistration, error)
 	Get(network string) (*AuthRegistration, error)
 	GetAll() ([]AuthRegistration, error)
@@ -72,11 +72,12 @@ func (a *oauthApp) Get(network string) (*AuthRegistration, error) {
 	return &res, a.persist.Get(network, &res)
 }
 
-func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error) {
+func (a *oauthApp) Create(tp ProviderType, network, clientid, clientsecret, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error) {
 	if network == "" {
 		return nil, fmt.Errorf("empty network not allowed")
 	}
 	reg := AuthRegistration{
+		Type:           tp,
 		Network:        network,
 		ClientId:       clientid,
 		ClientSecret:   clientsecret,
@@ -150,6 +151,7 @@ func (t *AuthRegService) createReg(me *users.User, request *restful.Request, res
 		return
 	}
 	rest.HandleEntity(t.Registry.Create(
+		ProviderType(reg.Type),
 		reg.Network,
 		reg.ClientId,
 		reg.ClientSecret,
