@@ -32,7 +32,7 @@ type AuthBackend interface {
 // store the keys in memory ... security issue?
 type jwtAuthorizer struct {
 	privKey      *rsa.PrivateKey
-	authRegistry oauth.OAuthRegistry
+	authRegistry oauth.AuthRegistry
 }
 
 // register a backend service for the given network name
@@ -42,7 +42,7 @@ func RegisterBackend(name string, be AuthBackend) {
 
 // The one and only Auther.  Please create these keypair with openssl or
 // something else. Another option is to let orca generate them.
-func NewAuther(key *rsa.PrivateKey, registry oauth.OAuthRegistry) auth.Auther {
+func NewAuther(key *rsa.PrivateKey, registry oauth.AuthRegistry) auth.Auther {
 	return &jwtAuthorizer{privKey: key, authRegistry: registry}
 }
 

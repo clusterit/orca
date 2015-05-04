@@ -11,41 +11,47 @@ import (
 )
 
 const (
-	oauthPath = "/oauth"
+	oauthPath              = "/oauth"
+	typeOauth ProviderType = "oauth"
+	typeBasic              = "basic"
 )
 
-type OauthRegistration struct {
-	Network        string `json:"network"`
-	ClientId       string `json:"clientid"`
-	ClientSecret   string `json:"clientsecret"`
-	Scopes         string `json:"scopes"`
-	AuthUrl        string `json:"auth_url"`
-	AccessTokenUrl string `json:"accesstoken_url"`
-	UserinfoUrl    string `json:"userinfo_url"`
-	PathId         string `json:"pathid"`
-	PathName       string `json:"pathname"`
-	PathPicture    string `json:"pathpicture"`
-	PathCover      string `json:"pathcover"`
+type ProviderType string
+
+type AuthRegistration struct {
+	Type           ProviderType `json:"type"`
+	Network        string       `json:"network"`
+	ClientId       string       `json:"clientid"`
+	ClientSecret   string       `json:"clientsecret"`
+	Scopes         string       `json:"scopes"`
+	AuthUrl        string       `json:"auth_url"`
+	AccessTokenUrl string       `json:"accesstoken_url"`
+	UserinfoUrl    string       `json:"userinfo_url"`
+	PathId         string       `json:"pathid"`
+	PathName       string       `json:"pathname"`
+	PathPicture    string       `json:"pathpicture"`
+	PathCover      string       `json:"pathcover"`
 }
 
 type LoginProvider struct {
-	Network  string `json:"network"`
-	ClientId string `json:"clientid"`
-	Scopes   string `json:"scopes"`
-	AuthUrl  string `json:"authurl"`
+	Type     ProviderType `json:"type"`
+	Network  string       `json:"network"`
+	ClientId string       `json:"clientid"`
+	Scopes   string       `json:"scopes"`
+	AuthUrl  string       `json:"authurl"`
 }
 
-type OAuthRegistry interface {
-	Create(network string, clientid, clientsecrect, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*OauthRegistration, error)
-	Delete(network string) (*OauthRegistration, error)
-	Get(network string) (*OauthRegistration, error)
-	GetAll() ([]OauthRegistration, error)
+type AuthRegistry interface {
+	Create(network string, clientid, clientsecrect, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error)
+	Delete(network string) (*AuthRegistration, error)
+	Get(network string) (*AuthRegistration, error)
+	GetAll() ([]AuthRegistration, error)
 }
 
 type AuthRegService struct {
 	Auth     auth.Auther
 	Users    users.Users
-	Registry OAuthRegistry
+	Registry AuthRegistry
 }
 
 type oauthApp struct {
@@ -53,7 +59,7 @@ type oauthApp struct {
 	persist etcd.Persister
 }
 
-func New(cc *etcd.Cluster) (OAuthRegistry, error) {
+func New(cc *etcd.Cluster) (AuthRegistry, error) {
 	pers, err := cc.NewJsonPersister(oauthPath)
 	if err != nil {
 		return nil, err
@@ -61,16 +67,16 @@ func New(cc *etcd.Cluster) (OAuthRegistry, error) {
 	return &oauthApp{cc, pers}, nil
 }
 
-func (a *oauthApp) Get(network string) (*OauthRegistration, error) {
-	var res OauthRegistration
+func (a *oauthApp) Get(network string) (*AuthRegistration, error) {
+	var res AuthRegistration
 	return &res, a.persist.Get(network, &res)
 }
 
-func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*OauthRegistration, error) {
+func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, accessurl, userinfourl, pathid, pathname, pathpicture, pathcover string) (*AuthRegistration, error) {
 	if network == "" {
 		return nil, fmt.Errorf("empty network not allowed")
 	}
-	reg := OauthRegistration{
+	reg := AuthRegistration{
 		Network:        network,
 		ClientId:       clientid,
 		ClientSecret:   clientsecret,
@@ -89,16 +95,16 @@ func (a *oauthApp) Create(network, clientid, clientsecret, scopes, authurl, acce
 	return &reg, nil
 }
 
-func (a *oauthApp) Delete(network string) (*OauthRegistration, error) {
-	var res OauthRegistration
+func (a *oauthApp) Delete(network string) (*AuthRegistration, error) {
+	var res AuthRegistration
 	if err := a.persist.Get(network, &res); err != nil {
 		return nil, err
 	}
 	return &res, a.persist.Remove(network)
 }
 
-func (a *oauthApp) GetAll() ([]OauthRegistration, error) {
-	var res []OauthRegistration
+func (a *oauthApp) GetAll() ([]AuthRegistration, error) {
+	var res []AuthRegistration
 	return res, a.persist.GetAll(true, false, &res)
 }
 
@@ -118,12 +124,12 @@ func (t *AuthRegService) Register(root string, c *restful.Container) {
 	ws.Route(ws.PUT("/").To(mgr(t.createReg)).
 		Doc("create a oauth registration").
 		Operation("createReg").
-		Reads(OauthRegistration{}).
-		Writes(OauthRegistration{}))
+		Reads(AuthRegistration{}).
+		Writes(AuthRegistration{}))
 	ws.Route(ws.GET("/").To(mgr(t.getAllRegs)).
 		Doc("get all registered oauth registrations").
 		Operation("getAllRegs").
-		Returns(200, "OK", []OauthRegistration{}))
+		Returns(200, "OK", []AuthRegistration{}))
 	ws.Route(ws.GET("/loginProviders").To(t.loginProviders).
 		Doc("get all login providers usable for login").
 		Operation("loginProviders").
@@ -132,13 +138,13 @@ func (t *AuthRegService) Register(root string, c *restful.Container) {
 		Doc("delete the registry for the given network").
 		Param(ws.PathParameter("network", "the network name of the registry").DataType("string")).
 		Operation("deleteReg").
-		Returns(200, "OK", OauthRegistration{}))
+		Returns(200, "OK", AuthRegistration{}))
 
 	c.Add(ws)
 }
 
 func (t *AuthRegService) createReg(me *users.User, request *restful.Request, response *restful.Response) {
-	var reg OauthRegistration
+	var reg AuthRegistration
 	if err := request.ReadEntity(&reg); err != nil {
 		rest.HandleError(err, response)
 		return

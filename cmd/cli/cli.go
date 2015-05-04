@@ -87,13 +87,13 @@ func (c *cli) putGateway(stage string, gw config.Gateway) error {
 	return c.unmarshal(r, nil)
 }
 
-func (c *cli) listOauthProviders() ([]oauth.OauthRegistration, error) {
-	var res []oauth.OauthRegistration
+func (c *cli) listOauthProviders() ([]oauth.AuthRegistration, error) {
+	var res []oauth.AuthRegistration
 	r := c.rq("GET", "/api/authregistry", nil)
 	return res, c.unmarshal(r, &res)
 }
 
-func (c *cli) putProvider(p oauth.OauthRegistration) error {
+func (c *cli) putProvider(p oauth.AuthRegistration) error {
 	r := c.rq("PUT", "/api/authregistry", p)
 	return c.unmarshal(r, nil)
 }

@@ -266,15 +266,15 @@ type restmanager struct {
 	userimpl       users.Users
 	authimpl       auth.Auther
 	configer       config.Configer
-	oauthreg       oauth.OAuthRegistry
+	oauthreg       oauth.AuthRegistry
 	autherService  *auth.AutherService
 	configService  *configservice.ConfigService
 	usersService   *users.UsersService
 	wsContainer    *restful.Container
 	authregService *oauth.AuthRegService
 
-	initAuther         func(string, config.ManagerConfig, oauth.OAuthRegistry) (auth.Auther, error)
-	switchSettings     func(config.ManagerConfig, oauth.OAuthRegistry) (auth.Auther, error)
+	initAuther         func(string, config.ManagerConfig, oauth.AuthRegistry) (auth.Auther, error)
+	switchSettings     func(config.ManagerConfig, oauth.AuthRegistry) (auth.Auther, error)
 	registerUrlMapping func(*http.ServeMux)
 }
 
@@ -376,7 +376,7 @@ func (rm *restmanager) setAdmins(admins ...string) {
 	}
 }
 
-func (rm *restmanager) setProvider(network, clientid, clientsecret string) (*oauth.OauthRegistration, error) {
+func (rm *restmanager) setProvider(network, clientid, clientsecret string) (*oauth.AuthRegistration, error) {
 	return rm.oauthreg.Create(network, clientid, clientsecret, "", "", "", "", "", "", "", "")
 }
 

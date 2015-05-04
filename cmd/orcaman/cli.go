@@ -10,11 +10,11 @@ import (
 	"github.com/clusterit/orca/etcd"
 )
 
-func cliInitZone(zone string, cfg config.ManagerConfig, reg oauth.OAuthRegistry) (auth.Auther, error) {
+func cliInitZone(zone string, cfg config.ManagerConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
 	return basic.NewAuther(cfg.AuthUrl, cfg.VerifyCert), nil
 }
 
-func cliSwitchSettings(cfg config.ManagerConfig, reg oauth.OAuthRegistry) (auth.Auther, error) {
+func cliSwitchSettings(cfg config.ManagerConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
 	return basic.NewAuther(cfg.AuthUrl, cfg.VerifyCert), nil
 }
 

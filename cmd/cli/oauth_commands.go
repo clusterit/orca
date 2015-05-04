@@ -53,7 +53,7 @@ var oauthPut = &cobra.Command{
 			cmd.Usage()
 			os.Exit(1)
 		}
-		reg := oauth.OauthRegistration{
+		reg := oauth.AuthRegistration{
 			Network:        args[0],
 			ClientId:       args[1],
 			ClientSecret:   args[2],

@@ -3,11 +3,13 @@ package oauth
 const (
 	googleNetwork = "google"
 	githubNetwork = "github"
+	gitlabNetwork = "gitlab"
 )
 
 var (
-	defaultBackends = map[string]OauthRegistration{
-		googleNetwork: OauthRegistration{
+	defaultBackends = map[string]AuthRegistration{
+		googleNetwork: AuthRegistration{
+			Type:           typeOauth,
 			Scopes:         "openid,profile,email,https://www.googleapis.com/auth/plus.me",
 			AuthUrl:        "https://accounts.google.com/o/oauth2/auth",
 			AccessTokenUrl: "https://accounts.google.com/o/oauth2/token",
@@ -17,7 +19,8 @@ var (
 			PathPicture:    "image.url",
 			PathCover:      "cover.coverPhoto.url",
 		},
-		githubNetwork: OauthRegistration{
+		githubNetwork: AuthRegistration{
+			Type:           typeOauth,
 			Scopes:         "user:email",
 			AuthUrl:        "https://github.com/login/oauth/authorize",
 			AccessTokenUrl: "https://github.com/login/oauth/access_token",
@@ -27,15 +30,26 @@ var (
 			PathPicture:    "avatar_url",
 			PathCover:      "",
 		},
+		gitlabNetwork: AuthRegistration{
+			Type:           typeOauth,
+			Scopes:         "",
+			AuthUrl:        "https://gitlab.com/oauth/authorize",
+			AccessTokenUrl: "https://gitlab.com/oauth/token",
+			UserinfoUrl:    "https://gitlab.com/api/v3/user",
+			PathId:         "username",
+			PathName:       "name",
+			PathPicture:    "avatar_url",
+			PathCover:      "",
+		},
 	}
 )
 
-func getDefaults(backend string) OauthRegistration {
+func getDefaults(backend string) AuthRegistration {
 	res, _ := defaultBackends[backend]
 	return res
 }
 
-func fillDefaults(backend string, reg OauthRegistration) OauthRegistration {
+func fillDefaults(backend string, reg AuthRegistration) AuthRegistration {
 	def := getDefaults(backend)
 	if reg.Scopes == "" {
 		reg.Scopes = def.Scopes
