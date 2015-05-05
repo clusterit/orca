@@ -23,6 +23,7 @@ const (
 	keysPath   = "/keys"
 	permitPath = "/permit"
 	twofaPath  = "/2fa"
+	idtoksPath = "/idtoks"
 )
 
 var (
@@ -30,11 +31,12 @@ var (
 )
 
 type etcdUsers struct {
-	up    etcd.Persister
-	kp    etcd.Persister
-	pm    etcd.Persister
-	al    etcd.Persister
-	twofa etcd.Persister
+	up     etcd.Persister
+	kp     etcd.Persister
+	pm     etcd.Persister
+	al     etcd.Persister
+	twofa  etcd.Persister
+	idtoks etcd.Persister
 }
 
 func New(cl *etcd.Cluster) (Users, error) {
@@ -58,7 +60,11 @@ func New(cl *etcd.Cluster) (Users, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &etcdUsers{up: up, kp: kp, pm: pm, al: al, twofa: twofa}, nil
+	idtoks, e := cl.NewJsonPersister("/data" + idtoksPath)
+	if e != nil {
+		return nil, e
+	}
+	return &etcdUsers{up: up, kp: kp, pm: pm, al: al, twofa: twofa, idtoks: idtoks}, nil
 }
 
 func (eu *etcdUsers) key(k *Key) string {
@@ -103,7 +109,8 @@ func (eu *etcdUsers) Create(network, id, name string, rlz Roles) (*User, error) 
 	u, e := eu.Get(usrid)
 	if e != nil {
 		internalid := common.GenerateUUID()
-		u = &User{Id: internalid, Name: name, Roles: rlz, Aliases: []string{usrid}}
+		idtoken := common.GenerateUUID()
+		u = &User{Id: internalid, Name: name, Roles: rlz, Aliases: []string{usrid}, IdToken: idtoken}
 		// generate an alias for internalid too
 		if err := eu.al.Put(internalid, internalid); err != nil {
 			return nil, err
@@ -117,7 +124,33 @@ func (eu *etcdUsers) Create(network, id, name string, rlz Roles) (*User, error) 
 	if err := eu.al.Put(usrid, u.Id); err != nil {
 		return nil, err
 	}
+	if err := eu.idtoks.Put(u.IdToken, u.Id); err != nil {
+		return nil, err
+	}
 	return u, eu.up.Put(u.Id, u)
+}
+
+func (eu *etcdUsers) NewIdToken(uid string) (*User, error) {
+	u, e := eu.Get(uid)
+	if e != nil {
+		return nil, e
+	}
+	// ignore error when removing old token
+	idtoken := common.GenerateUUID()
+	if err := eu.idtoks.Put(idtoken, u.Id); err != nil {
+		return nil, err
+	}
+	eu.idtoks.Remove(u.IdToken)
+	u.IdToken = idtoken
+	return u, eu.up.Put(u.Id, &u)
+}
+
+func (eu *etcdUsers) ByIdToken(idtok string) (*User, error) {
+	var uid string
+	if err := eu.idtoks.Get(idtok, &uid); err != nil {
+		return nil, wrapError(err)
+	}
+	return eu.Get(uid)
 }
 
 func (eu *etcdUsers) GetAll() ([]User, error) {
@@ -165,20 +198,10 @@ func (eu *etcdUsers) GetByKey(pubkey string) (*User, *Key, error) {
 		return nil, nil, err
 	}
 	if err := eu.kp.Get(eu.key(pk), &uid); err != nil {
-		if cerr, ok := err.(*goetcd.EtcdError); ok {
-			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
-				return nil, nil, common.ErrNotFound
-			}
-		}
-		return nil, nil, err
+		return nil, nil, wrapError(err)
 	}
 	if err := eu.up.Get(uid, &u); err != nil {
-		if cerr, ok := err.(*goetcd.EtcdError); ok {
-			if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
-				return nil, nil, common.ErrNotFound
-			}
-		}
-		return nil, nil, err
+		return nil, nil, wrapError(err)
 	}
 	for _, k := range u.Keys {
 		if pk.Value == k.Value {
@@ -377,4 +400,13 @@ func remove(s string, ar []string) []string {
 		res = append(res, k)
 	}
 	return res
+}
+
+func wrapError(e error) error {
+	if cerr, ok := e.(*goetcd.EtcdError); ok {
+		if cerr.ErrorCode == etcderr.EcodeKeyNotFound {
+			return common.ErrNotFound
+		}
+	}
+	return e
 }

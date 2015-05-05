@@ -5,6 +5,11 @@
     <link rel="stylesheet" href="settings-element.css">
     <div layout vertical>
       <div layout vertical>
+        <paper-shadow z="1" id="idPanel">
+          <div>Your secure token is <span class="secureToken">{{details.idtoken}}</span>. Keep this value secure; you can use this
+          token to authenticate with the webservices. If the token is compromised, click <paper-button raised on-tap="{{newIdToken}}">here</paper-button> to
+          generate a new one.</div>
+        </paper-shadow>
         <paper-shadow z="1" id="twoFApanel">
           <h3>Two Factor Authentication</h3>
           <template if="{{details.use2fa}}">
@@ -84,6 +89,13 @@
       handleAs="json"
       on-core-response="{{user2faSet}}"></core-ajax>
     <core-ajax
+      id="genidtoken"
+      method="PATCH"
+      url="{{apiBase}}/users/idtoken"
+      headers='{"Authorization":"{{user.token}}"}'
+      handleAs="json"
+      on-core-response="{{userChanged}}"></core-ajax>
+    <core-ajax
       id="autologin2fa"
       method="PATCH"
       url="{{apiBase}}/users/autologin2fa/{{autologinSecs}}"
@@ -96,7 +108,7 @@
       url="{{apiBase}}/users/permit/{{duration}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
-      on-core-response="{{userAllowed}}"></core-ajax>
+      on-core-response="{{userChanged}}"></core-ajax>
     
   </template>
   <script>
@@ -114,6 +126,9 @@
         if (this.user && this.user.allowance) {
           this.allowedtime = this.user.allowance.until;
         }
+      },
+      newIdToken : function () {
+        this.$.genidtoken.go();
       },
       detailsChanged : function (oldv, newv) {
         if (newv)
@@ -161,8 +176,8 @@
         this.duration = parseInt(el.srcElement.dataset.value, 10) * 3600;
         this.$.allowance.go();
       },
-      userAllowed : function (rsp, det) {
-        this.fire("allowed")
+      userChanged : function (rsp, det) {
+        this.fire("changed")
       }
     });
   </script>

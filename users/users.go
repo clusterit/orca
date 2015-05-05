@@ -31,6 +31,7 @@ type User struct {
 	Use2FA            bool       `json:"use2fa"`
 	AutologinAfter2FA int        `json:"autologinafter2FA"`
 	Allowance         *Allowance `json:"allowance,omitempty"`
+	IdToken           string     `json:"idtoken"`
 }
 
 type Key struct {
@@ -48,6 +49,8 @@ type Allowance struct {
 type Users interface {
 	Create(network, id, name string, rolzs Roles) (*User, error)
 	AddAlias(id, network, alias string) (*User, error)
+	NewIdToken(uid string) (*User, error)
+	ByIdToken(idtok string) (*User, error)
 	RemoveAlias(id, network, alias string) (*User, error)
 	GetAll() ([]User, error)
 	Get(id string) (*User, error)

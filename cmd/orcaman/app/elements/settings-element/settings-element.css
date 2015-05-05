@@ -21,6 +21,12 @@
   background: white;
 }
 
+#idPanel {
+  padding: 8px;
+  margin: 8px;
+  background: white;
+}
+
 #browsertable {
   margin: 10px;
   display: table;
@@ -61,4 +67,11 @@ paper-button.white {
 
 #allowedlabel {
   padding: 5px;
+}
+
+.secureToken {
+  font-weight: bold;
+  font-family: monospace;
+  white-space: nowrap;
+  display:inline-block;
 }

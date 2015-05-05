@@ -41,6 +41,18 @@ func (c *cli) listUsers() ([]users.User, error) {
 	return res, c.unmarshal(r, &res)
 }
 
+func (c *cli) me() (*users.User, error) {
+	var res users.User
+	r := c.rq("GET", "/api/users/me", nil)
+	return &res, c.unmarshal(r, &res)
+}
+
+func (c *cli) permit(dur int) (*users.Allowance, error) {
+	var res users.Allowance
+	r := c.rq("PATCH", fmt.Sprintf("/api/users/permit/%d", dur), nil)
+	return &res, c.unmarshal(r, &res)
+}
+
 func (c *cli) parseKey(k string) (*users.Key, error) {
 	var key users.Key
 	r := c.rq("POST", "/api/users/parsekey", k)
@@ -87,6 +99,16 @@ func (c *cli) putGateway(stage string, gw config.Gateway) error {
 	return c.unmarshal(r, nil)
 }
 
+func (c *cli) getCluster() (*config.ClusterConfig, error) {
+	var res config.ClusterConfig
+	r := c.rq("GET", fmt.Sprintf("/api/configuration/cluster"), nil)
+	return &res, c.unmarshal(r, &res)
+}
+
+func (c *cli) putCluster(cc config.ClusterConfig) error {
+	r := c.rq("PUT", fmt.Sprintf("/api/configuration/cluster"), cc)
+	return c.unmarshal(r, nil)
+}
 func (c *cli) listOauthProviders() ([]oauth.AuthRegistration, error) {
 	var res []oauth.AuthRegistration
 	r := c.rq("GET", "/api/authregistry", nil)
@@ -102,11 +124,11 @@ func (c *cli) delProvider(n string) error {
 	return c.unmarshal(r, nil)
 }
 
-func (c *cli) addAlias(uid, network, alias string) error {
-	r := c.rq("PUT", "/api/users/alias/"+uid+"/"+network+"/"+alias, nil)
+func (c *cli) addAlias(network, alias string) error {
+	r := c.rq("PUT", "/api/users/alias/"+network+"/"+alias, nil)
 	return c.unmarshal(r, nil)
 }
-func (c *cli) removeAlias(uid, network, alias string) error {
-	r := c.rq("DELETE", "/api/users/alias/"+uid+"/"+network+"/"+alias, nil)
+func (c *cli) removeAlias(network, alias string) error {
+	r := c.rq("DELETE", "/api/users/alias/"+network+"/"+alias, nil)
 	return c.unmarshal(r, nil)
 }

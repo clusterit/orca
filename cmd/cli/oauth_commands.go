@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/clusterit/orca/auth/oauth"
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/spf13/cobra"
 )
@@ -38,9 +37,7 @@ var oauthList = &cobra.Command{
 		c := newCli()
 		res, err := c.listOauthProviders()
 		exitWhenError(err)
-		for _, r := range res {
-			spew.Dump(r)
-		}
+		dumpValue(res)
 	},
 }
 

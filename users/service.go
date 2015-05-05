@@ -47,7 +47,9 @@ func (t *UsersService) Shutdown() error {
 
 func (t *UsersService) Register(root string, c *restful.Container) {
 	manager := CheckUser(t.Auth, t.Provider, ManagerRoles, nil)
-	userRoles := CheckUser(t.Auth, t.Provider, UserRoles, t.Config)
+	userRoles := CheckUser(t.Auth, t.Provider, UserRoles, nil)
+	// the next rolechecker would create the user if he does not exist
+	userRolesAutoCreate := CheckUser(t.Auth, t.Provider, UserRoles, t.Config)
 
 	ws := new(restful.WebService)
 	ws.
@@ -61,17 +63,15 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.PathParameter("network", "identifier the provider for the user").DataType("string")).
 		Reads(User{}).
 		Writes(User{}))
-	ws.Route(ws.PUT("/alias/{user-id}/{network}/{alias}").To(userRoles(t.addAlias)).
+	ws.Route(ws.PUT("/alias/{network}/{alias}").To(userRoles(t.addAlias)).
 		Doc("add an alias to user").
 		Operation("add Alias").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("network", "identifier the provider for the alias").DataType("string")).
 		Param(ws.PathParameter("alias", "identifier of the alias").DataType("string")).
 		Writes(User{}))
-	ws.Route(ws.DELETE("/alias/{user-id}/{network}/{alias}").To(userRoles(t.removeAlias)).
+	ws.Route(ws.DELETE("/alias/{network}/{alias}").To(userRoles(t.removeAlias)).
 		Doc("remove an alias from a user").
 		Operation("remove Alias").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("network", "identifier the provider for the alias").DataType("string")).
 		Param(ws.PathParameter("alias", "identifier of the alias").DataType("string")).
 		Writes(User{}))
@@ -79,21 +79,25 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Doc("get all registered users").
 		Operation("getAll").
 		Returns(200, "OK", []User{}))
-	ws.Route(ws.GET("/me").To(userRoles(t.getUser)).
+	ws.Route(ws.GET("/me").To(userRolesAutoCreate(t.getUser)).
 		Doc("retrieves the current authenticated user").
 		Operation("getUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.DELETE("/{user-id}").To(userRoles(t.deleteUser)).
+	ws.Route(ws.DELETE("/{user-id}").To(manager(t.deleteUser)).
 		Doc("deletes the given user").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Operation("deleteUser").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/{user-id}").To(userRoles(t.updateUser)).
+	ws.Route(ws.PATCH("/{user-id}").To(manager(t.updateUser)).
 		Doc("updates the given user's name").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.QueryParameter("name", "new name of the user").DataType("string")).
 		Param(ws.QueryParameter("role", "a role of the user").DataType("string").AllowMultiple(true)).
 		Operation("updateUser").
+		Returns(200, "OK", User{}))
+	ws.Route(ws.PATCH("/idtoken").To(userRoles(t.updateUserIdToken)).
+		Doc("generate a new id-token for the current user").
+		Operation("updateUserIdToken").
 		Returns(200, "OK", User{}))
 	ws.Route(ws.PATCH("/permit/{duration}").To(userRoles(t.permitUser)).
 		Doc("permits the user to login the next 'duration' seconds").
@@ -105,16 +109,14 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Operation("getUserByKey").
 		Reads("").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PUT("/{user-id}/{key-id}/pubkey").To(userRoles(t.addUserKey)).
+	ws.Route(ws.PUT("/{key-id}/pubkey").To(userRoles(t.addUserKey)).
 		Doc("add the given key to the users list of public keys").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
 		Operation("addUserKey").
 		Reads("").
 		Returns(200, "OK", Key{}))
-	ws.Route(ws.DELETE("/{user-id}/{key-id}/pubkey").To(userRoles(t.deleteUserKey)).
-		Doc("delete the given key to the users list of public keys").
-		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
+	ws.Route(ws.DELETE("/{key-id}/pubkey").To(userRoles(t.deleteUserKey)).
+		Doc("delete the given key from the users list of public keys").
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
 		Operation("deleteUserKey").
 		Returns(200, "OK", Key{}))
@@ -213,6 +215,10 @@ func (t *UsersService) updateUser(me *User, request *restful.Request, response *
 	rest.HandleEntity(t.Provider.Update(uid, name, roles(rlz)))(request, response)
 }
 
+func (t *UsersService) updateUserIdToken(me *User, request *restful.Request, response *restful.Response) {
+	rest.HandleEntity(t.Provider.NewIdToken(me.Id))(request, response)
+}
+
 func (t *UsersService) permitUser(me *User, request *restful.Request, response *restful.Response) {
 	dur := request.PathParameter("duration")
 	dr, err := strconv.ParseInt(dur, 10, 64)
@@ -238,11 +244,7 @@ func (t *UsersService) getUserByKey(request *restful.Request, response *restful.
 }
 
 func (t *UsersService) addUserKey(me *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
 	kid := request.PathParameter("key-id")
-	if !allowed(me, uid, response) {
-		return
-	}
 	var pubk string
 	err := request.ReadEntity(&pubk)
 	if err != nil {
@@ -255,7 +257,7 @@ func (t *UsersService) addUserKey(me *User, request *restful.Request, response *
 		return
 	}
 
-	k, err := AsKey(t.Provider, uid, kid, string(pubk))
+	k, err := AsKey(t.Provider, me.Id, kid, string(pubk))
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
 		return
@@ -264,12 +266,8 @@ func (t *UsersService) addUserKey(me *User, request *restful.Request, response *
 }
 
 func (t *UsersService) deleteUserKey(me *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
 	kid := request.PathParameter("key-id")
-	if !allowed(me, uid, response) {
-		return
-	}
-	k, err := t.Provider.RemoveKey(uid, kid)
+	k, err := t.Provider.RemoveKey(me.Id, kid)
 	if err != nil {
 		rest.HandleError(err, response)
 		return
@@ -278,17 +276,15 @@ func (t *UsersService) deleteUserKey(me *User, request *restful.Request, respons
 }
 
 func (t *UsersService) addAlias(me *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
 	alias := request.PathParameter("alias")
 	network := request.PathParameter("network")
-	rest.HandleEntity(t.Provider.AddAlias(uid, network, alias))(request, response)
+	rest.HandleEntity(t.Provider.AddAlias(me.Id, network, alias))(request, response)
 }
 
 func (t *UsersService) removeAlias(me *User, request *restful.Request, response *restful.Response) {
-	uid := request.PathParameter("user-id")
 	alias := request.PathParameter("alias")
 	network := request.PathParameter("network")
-	rest.HandleEntity(t.Provider.RemoveAlias(uid, network, alias))(request, response)
+	rest.HandleEntity(t.Provider.RemoveAlias(me.Id, network, alias))(request, response)
 }
 
 func (t *UsersService) use2fa(me *User, request *restful.Request, response *restful.Response) {

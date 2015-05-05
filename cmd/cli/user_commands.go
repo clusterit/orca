@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 )
 
@@ -35,19 +34,19 @@ var addUser = &cobra.Command{
 
 var removeAlias bool
 var userAlias = &cobra.Command{
-	Use:   "alias [# uid] [# network] [# alias]",
-	Short: "add a alias for user",
-	Long:  "add a alias for user. you can suffx existing users with their network name to link the alias to them, aka. add '@google' to them",
+	Use:   "alias [# network] [# alias]",
+	Short: "add or remove an alias for the current user",
+	Long:  "add or remove an alias for the current user.",
 	Run: func(cmd *cobra.Command, args []string) {
 		c := newCli()
-		if len(args) < 3 {
+		if len(args) < 2 {
 			cmd.Usage()
 			os.Exit(1)
 		}
 		if removeAlias {
-			exitWhenError(c.removeAlias(args[0], args[1], args[2]))
+			exitWhenError(c.removeAlias(args[0], args[1]))
 		} else {
-			exitWhenError(c.addAlias(args[0], args[1], args[2]))
+			exitWhenError(c.addAlias(args[0], args[1]))
 		}
 	},
 }
@@ -60,9 +59,7 @@ var listUsers = &cobra.Command{
 		c := newCli()
 		usrs, err := c.listUsers()
 		exitWhenError(err)
-		for _, u := range usrs {
-			spew.Dump(u)
-		}
+		dumpValue(usrs)
 	},
 }
 var keyname string

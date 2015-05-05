@@ -18,14 +18,28 @@ type UserFunction func(usr *User, request *restful.Request, response *restful.Re
 func HasRoles(wrap UserFunction, ath auth.Auther, usrs Users, rlz Roles, cfg config.Configer) restful.RouteFunction {
 	return func(request *restful.Request, response *restful.Response) {
 		token := request.HeaderParameter("Authorization")
-
-		a, err := ath.Get(token)
-		if err != nil {
-			response.WriteError(http.StatusUnauthorized, rest.JsonError(err.Error()))
-			return
+		idtoken := request.HeaderParameter("X-Orca-Token")
+		var (
+			network string
+			uid     string
+		)
+		if token != "" {
+			a, err := ath.Get(token)
+			if err != nil {
+				response.WriteError(http.StatusUnauthorized, rest.JsonError(err.Error()))
+				return
+			}
+			network = a.Network
+			uid = a.Uid
+		} else if idtoken != "" {
+			u, e := usrs.ByIdToken(idtoken)
+			if e != nil {
+				response.WriteError(http.StatusUnauthorized, rest.JsonError(e.Error()))
+				return
+			}
+			uid = u.Id
 		}
-
-		hasroles, u, err := hasAuthorizedRoles(a.Network, a.Uid, usrs, rlz, cfg)
+		hasroles, u, err := hasAuthorizedRoles(network, uid, usrs, rlz, cfg)
 		if err != nil || !hasroles {
 			response.WriteError(http.StatusForbidden, rest.JsonError("not allowed"))
 			return
@@ -39,7 +53,11 @@ func HasRoles(wrap UserFunction, ath auth.Auther, usrs Users, rlz Roles, cfg con
 // the given roles, otherwise false. Note: A return value of false does not
 // imply an error!
 func hasAuthorizedRoles(network, uid string, usrs Users, rlz Roles, cfg config.Configer) (bool, *User, error) {
-	u, err := usrs.Get(common.NetworkUser(network, uid))
+	fullUid := uid
+	if network != "" {
+		fullUid = common.NetworkUser(network, uid)
+	}
+	u, err := usrs.Get(fullUid)
 	if err != nil && common.IsNotFound(err) && cfg != nil {
 		cls, e := cfg.Cluster()
 		if e != nil {

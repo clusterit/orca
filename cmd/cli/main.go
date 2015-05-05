@@ -1,12 +1,14 @@
 package main
 
 import (
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+	"os"
+	"strconv"
 
 	"github.com/clusterit/orca/common"
-	"github.com/howeyc/gopass"
 	"github.com/jmcvetta/napping"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -19,17 +21,15 @@ const (
 // options
 var (
 	serviceUrl string
-	user       string
 	debug      bool
-	password   bool
+	unsecure   bool
 	revision   string
+	usertoken  string
 )
 
 type cli struct {
-	server   string
-	user     string
-	session  napping.Session
-	password string
+	server  string
+	session napping.Session
 }
 
 func (c *cli) url(u string) string {
@@ -38,11 +38,9 @@ func (c *cli) url(u string) string {
 
 func (c *cli) rq(m, u string, pl interface{}) *napping.Request {
 	rq := &napping.Request{Method: m, Url: c.url(u), Header: &http.Header{}}
-	if c.user != "" {
-		rq.Userinfo = url.UserPassword(c.user, c.password)
-	}
 	rq.Header.Add("Content-Type", jsonType)
 	rq.Header.Add("Accept", jsonType)
+	rq.Header.Add("X-Orca-Token", usertoken)
 	if pl != nil {
 		rq.Payload = pl
 	}
@@ -50,14 +48,13 @@ func (c *cli) rq(m, u string, pl interface{}) *napping.Request {
 }
 
 func newCli() *cli {
-	user := viper.GetString("user")
-	passwd := viper.GetString("password")
-	if user != "" && passwd == "" && password {
-		fmt.Print("Password: ")
-		passwd = string(gopass.GetPasswdMasked())
+	tr := &http.Transport{
+		Proxy:           http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: unsecure},
 	}
-	sess := napping.Session{Log: debug}
-	return &cli{server: serviceUrl, user: user, password: passwd, session: sess}
+	client := &http.Client{Transport: tr}
+	sess := napping.Session{Log: debug, Client: client}
+	return &cli{server: serviceUrl, session: sess}
 }
 
 var versionCmd = &cobra.Command{
@@ -68,20 +65,71 @@ var versionCmd = &cobra.Command{
 		fmt.Printf("Orca service client, revision '%s'\n", revision)
 	},
 }
+var whoami = &cobra.Command{
+	Use:   "whoami",
+	Long:  "Print my userdata",
+	Short: `Query my data from orca`,
+	Run: func(cmd *cobra.Command, args []string) {
+		c := newCli()
+		me, err := c.me()
+		exitWhenError(err)
+		dumpValue(me)
+	},
+}
+var permit = &cobra.Command{
+	Use:   "permit [#duration in secs]",
+	Long:  "permit the current user to login via the gateway for the given time",
+	Short: `permit the current user to do a ssh login`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) < 1 {
+			cmd.Usage()
+			os.Exit(1)
+		}
+		dur, err := strconv.ParseInt(args[0], 10, 0)
+		exitWhenError(err)
+		c := newCli()
+
+		a, err := c.permit(int(dur))
+		exitWhenError(err)
+
+		dumpValue(a)
+	},
+}
 
 func main() {
 
 	var cli = &cobra.Command{Use: "cli"}
-	cli.PersistentFlags().StringVarP(&serviceUrl, "service", "s", "http://localhost:9011", "the service url of climan")
-	cli.PersistentFlags().StringVarP(&user, "user", "u", "", "the username to use for the connection")
-	cli.PersistentFlags().BoolVarP(&password, "password", "p", false, "prompt for a password if set. Environment variable ORCA_PASSWORD overwrites this")
 	cli.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug output of the HTTP flow")
+	cli.PersistentFlags().BoolVarP(&unsecure, "unsecure", "u", false, "do not verify the SSL cert of the remote service (use only for selfsigned certs)")
 
-	cli.AddCommand(usercmd, keycmd, zones, gateway, oauthCmd, versionCmd)
+	cli.AddCommand(whoami, permit, usercmd, keycmd, zones, gateway, cluster, oauthCmd, versionCmd)
 
 	viper.SetEnvPrefix(common.OrcaPrefix)
 	viper.AutomaticEnv()
-	viper.BindPFlag("user", cli.Flag("user"))
-	cli.Execute()
+	serviceUrl = viper.GetString("service")
+	usertoken = viper.GetString("token")
 
+	run := true
+	if serviceUrl == "" {
+		fmt.Printf("please set the envirnment ORCA_SERVICE to the URL of a running orca manager")
+		run = false
+	}
+	if usertoken == "" {
+		fmt.Printf("please set the environment ORCA_TOKEN to your ID-Token which is displayed in the webapp. This token identifies you!")
+		run = false
+	}
+	if run {
+		cli.Execute()
+	} else {
+		os.Exit(1)
+	}
+}
+
+func dumpValue(v interface{}) {
+	res, e := json.MarshalIndent(v, "", "  ")
+	if e != nil {
+		fmt.Printf("cannot dump %#v as JSON: %s\n", v, e)
+	} else {
+		fmt.Printf("%s\n", string(res))
+	}
 }

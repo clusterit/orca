@@ -255,4 +255,16 @@ services on a different interfaces (`--clilisten ...` so that they can only be u
 whereas the Oauth-secured endpoints can listen on a public IP.
 
 ### Cli
-The cli support some basic commands to manage the system from the command line.
+The cli support some basic commands to manage the system from the command line. To use it, you have
+to set two environment variables:
+
+ - ORCA_SERVICE
+   The URL of the webservice backend. If you have more than one `orcaman` running, specify one of the
+   or use a loadbalancer in front.
+ - ORCA_TOKEN
+   Your token, which is displayed in the web UI of `orcaman`. Keep this token secure or generate a new
+   one if this token is compromized. It allows you to make service calls and you will be identified
+   by this token
+
+When both variables are set, you can simply call `cli` to see all options. 
+

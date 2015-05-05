@@ -57,7 +57,7 @@
                   on-error="{{displayError}}" 
                   user="{{user}}" 
                   details="{{userdetails}}" 
-                  on-allowed="{{userRefresh}}"
+                  on-changed="{{userRefresh}}"
                   on-userdetails="{{userdetailsChanged}}"></settings-element>
             </div>
             <div id="keyspage" fit>
@@ -164,6 +164,7 @@
         pg.children[0].doSave();
       },
       closeDrawer : function (evt) {
+        this.userRefresh();
         var e = evt.target.templateInstance.model;
         var cn = this.$[e.target].children[0];
         if (cn.clicked)
@@ -177,7 +178,7 @@
         this.username = u.data.name;
         this.token = u.data.token;
         this.network = u.data.network;
-        this.$.userloader.go();
+        //this.$.userloader.go();
       },
       userRefresh : function () {
         this.$.userloader.go();
