@@ -259,9 +259,12 @@ The cli support some basic commands to manage the system from the command line. 
 to set two environment variables:
 
  - ORCA_SERVICE
+ 
    The URL of the webservice backend. If you have more than one `orcaman` running, specify one of the
    or use a loadbalancer in front.
+
  - ORCA_TOKEN
+ 
    Your token, which is displayed in the web UI of `orcaman`. Keep this token secure or generate a new
    one if this token is compromized. It allows you to make service calls and you will be identified
    by this token
