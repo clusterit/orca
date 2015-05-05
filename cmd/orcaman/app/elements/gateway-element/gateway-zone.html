@@ -14,26 +14,26 @@
           if it is allowed.
           </div>
         </div>
-        <paper-toggle-button class="widget" checked="{{allowdeny}}"></paper-toggle-button>
+        <div class="widget"><paper-toggle-button checked="{{allowdeny}}"></paper-toggle-button></div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Allowed Cidrs</div>
           <div class="labelhelp">A comma separated list if CIDR's which are allowed as destination adresses</div>
         </div>
+        <div class="widget">
+          <paper-input style="width:100%" label="Allowed CIDRs" value="{{allowedcidrs}}"></paper-input>
+        </div>      
       </div>
-      <div flex class="cidr">
-        <paper-input style="width:100%" label="Allowed CIDRs" value="{{allowedcidrs}}"></paper-input>
-      </div>      
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Denied Cidrs</div>
           <div class="labelhelp">A comma separated list if CIDR's which are denied as destination adresses</div>
         </div>
+        <div class="widget">
+          <paper-input style="width:100%" label="Denied CIDRs" value="{{deniedcidrs}}"></paper-input>
+        </div>      
       </div>
-      <div flex class="authurl">
-        <paper-input style="width:100%" label="Denied CIDRs" value="{{deniedcidrs}}"></paper-input>
-      </div>      
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Time based login</div>
@@ -42,7 +42,9 @@
             Takes only effect when 2Factor Auth is not enabled!
           </div>
         </div>
-        <paper-toggle-button class="widget" checked="{{forcecheck}}"></paper-toggle-button>
+        <div class="widget">
+          <paper-toggle-button checked="{{forcecheck}}"></paper-toggle-button>
+        </div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
@@ -51,7 +53,9 @@
             2FA with a secret, she will not be able to login.
           </div>
         </div>
-        <paper-toggle-button class="widget" checked="{{force2fa}}"></paper-toggle-button>
+        <div class="widget">
+          <paper-toggle-button checked="{{force2fa}}"></paper-toggle-button>
+        </div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
@@ -62,24 +66,28 @@
             do a two factor auth.
           </div>
         </div>
-        <paper-input label="Autologin Max timeout" value="{{maxautologin}}"></paper-input>
+        <div class="widget">
+          <paper-input label="Autologin Max timeout" value="{{maxautologin}}"></paper-input>
+        </div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
           <div class="labeltext">Loglevel</div>
           <div class="labelhelp">Specify at which level the logging should be done. Trace is the most, Error is the least.</div>
         </div>
-        <paper-dropdown-menu label="LogLevel"  class="widget">
-          <paper-dropdown class="dropdown">
-            <core-menu valueattr="val" class="menu" selected="{{loglevel}}">
-              <paper-item val="TRACE">Trace</paper-item>
-              <paper-item val="DEBUG">Debug</paper-item>
-              <paper-item val="INFO">Info</paper-item>
-              <paper-item val="WARN">Warn</paper-item>
-              <paper-item val="ERROR">Error</paper-item>
-            </core-menu>
-          </paper-dropdown>
-        </paper-dropdown-menu>
+        <div class="widget">
+          <paper-dropdown-menu label="LogLevel">
+            <paper-dropdown class="dropdown">
+              <core-menu valueattr="val" class="menu" selected="{{loglevel}}">
+                <paper-item val="TRACE">Trace</paper-item>
+                <paper-item val="DEBUG">Debug</paper-item>
+                <paper-item val="INFO">Info</paper-item>
+                <paper-item val="WARN">Warn</paper-item>
+                <paper-item val="ERROR">Error</paper-item>
+              </core-menu>
+            </paper-dropdown>
+          </paper-dropdown-menu>
+        </div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
@@ -87,7 +95,9 @@
           <div class="labelhelp">Forward the request to this host if the user tries to login direct to the gateway.
           </div>
         </div>
-        <paper-input label="Default host" value="{{defaulthost}}"></paper-input>
+        <div class="widget">
+          <paper-input label="Default host" value="{{defaulthost}}"></paper-input>
+        </div>
       </div>      
       <div center horizontal layout>
         <div class="label" flex>
@@ -96,9 +106,7 @@
         </div>
       </div>
       <div flex class="hostkey">
-        <paper-autogrow-textarea id="phostkey" style="width:100%" flex>
           <textarea  placeholder="Paste your host key for the SSH gateway" id="thostkey" value="{{hostkey}}"></textarea>
-        </paper-autogrow-textarea>
       </div>
     </div>
 
@@ -113,7 +121,7 @@
       updateText : function (val) {
         this.$.thostkey.value = val;
         this.hostkey = val;
-        this.$.phostkey.update(this.$.thostkey);
+        //this.$.phostkey.update(this.$.thostkey);
       }
     });
   </script>

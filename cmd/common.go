@@ -29,12 +29,15 @@ func PublishAddress(pub, listen, path string) string {
 	return pub + path
 }
 
-func ForceZone(cfger config.Configer, zone string, createGateway, createMc bool) (*config.Gateway, *config.ManagerConfig, error) {
-	_, err := cfger.Cluster()
+func ForceZone(cfger config.Configer, zone string, createGateway bool) (*config.Gateway, *config.ClusterConfig, error) {
+	cfg, err := cfger.Cluster()
 	if common.IsNotFound(err) {
 		logger.Debugf("no clusterconfig existing, creating config 'local corp.'")
-		confg := config.ClusterConfig{Name: "local"}
-		if _, err := cfger.UpdateCluster(confg); err != nil {
+		confg, err := config.GenerateCluster("local", false)
+		if err != nil {
+			return nil, nil, err
+		}
+		if _, err := cfger.UpdateCluster(*confg); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -61,5 +64,6 @@ func ForceZone(cfger config.Configer, zone string, createGateway, createMc bool)
 			}
 		}
 	}
-	return config.InitZone(cfger, zone, createGateway, createMc)
+	gw, err := config.InitZone(cfger, zone, createGateway)
+	return gw, cfg, err
 }

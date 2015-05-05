@@ -1,6 +1,6 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="keys-element" attributes="details token zone apiBase">
+<polymer-element name="keys-element" attributes="details token apiBase">
   <template>
     <link rel="stylesheet" href="keys-element.css" >
 
@@ -23,7 +23,7 @@
     <core-ajax
       id="keysaver"
       method="PUT"
-      url="{{apiBase}}/users/{{details.id}}/{{newkeyid}}/{{zone}}/pubkey"
+      url="{{apiBase}}/users/{{details.id}}/{{newkeyid}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -31,7 +31,7 @@
     <core-ajax
       id="keydeleter"
       method="DELETE"
-      url="{{apiBase}}/users/{{details.id}}/{{removekey}}/{{zone}}/pubkey"
+      url="{{apiBase}}/users/{{details.id}}/{{removekey}}/pubkey"
       headers='{"Authorization":"{{token}}"}'
       handleAs="json"
       contentType="application/json"
@@ -67,10 +67,8 @@
       token : null,
       newkeyid : "",
       removekey : "",
-      zone : "",
 
       ready : function () {
-        console.log("zone:",this.zone);
       },
       showDeleteKey : function (evt) {
         var e = evt.target.templateInstance.model.model;

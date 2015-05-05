@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -70,7 +69,7 @@ var cmdAdmins = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		_, _, err = cmd.ForceZone(cfger, zone, true, true)
+		_, _, err = cmd.ForceZone(cfger, zone, true)
 		if err != nil {
 			panic(err)
 		}
@@ -91,7 +90,7 @@ var provider = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		_, _, err = cmd.ForceZone(cfger, zone, true, true)
+		_, _, err = cmd.ForceZone(cfger, zone, true)
 		if err != nil {
 			panic(err)
 		}
@@ -107,31 +106,6 @@ var provider = &cobra.Command{
 	},
 }
 
-var cliConfig = &cobra.Command{
-	Use:   "config [# basichAuthUrl] [# verifyCert]",
-	Short: "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
-	Long:  "Update the configuration for Basic-Auth in the zone to enable bootstrapping with the cli-tool",
-	Run: func(cm *cobra.Command, args []string) {
-		cc, cfger, err := connect(etcdConfig, etcdKey, etcdCert, etcdCa)
-		if err != nil {
-			panic(err)
-		}
-		m, err := newRest(cc, cfger, "", "")
-		if err != nil {
-			panic(err)
-		}
-		if len(args) < 2 {
-			cm.Help()
-			os.Exit(1)
-		}
-		authurl := args[0]
-		verify, err := strconv.ParseBool(args[1])
-		if err != nil {
-			panic(err)
-		}
-		m.setConfig(zone, authurl, verify)
-	},
-}
 var serve = &cobra.Command{
 	Use:   "serve",
 	Short: "Starts the manager to listen on the given address",
@@ -237,14 +211,14 @@ func start(listenAddress string, rm ...*restmanager) error {
 }
 
 func fetchZoneData(cfger config.Configer, zone string, rms []*restmanager) error {
-	mgr, stp, err := cfger.ManagerConfig(zone)
+	ccf, stp, err := cfger.ClusterConfig()
 	if err != nil {
 		return err
 	}
-	for m := range mgr {
-		logger.Debugf("new manager config: Key:%s", m.Key)
+	for c := range ccf {
+		logger.Debugf("new cluster config: Key:%s", c.Key)
 		for _, rm := range rms {
-			auth, err := rm.switchSettings(m, rm.oauthreg)
+			auth, err := rm.switchSettings(c, rm.oauthreg)
 			if err == nil {
 				rm.authimpl = auth
 				if rm.usersService != nil {
@@ -274,8 +248,8 @@ type restmanager struct {
 	wsContainer    *restful.Container
 	authregService *oauth.AuthRegService
 
-	initAuther         func(string, config.ManagerConfig, oauth.AuthRegistry) (auth.Auther, error)
-	switchSettings     func(config.ManagerConfig, oauth.AuthRegistry) (auth.Auther, error)
+	initAuther         func(string, config.ClusterConfig, oauth.AuthRegistry) (auth.Auther, error)
+	switchSettings     func(config.ClusterConfig, oauth.AuthRegistry) (auth.Auther, error)
 	registerUrlMapping func(*http.ServeMux)
 }
 
@@ -300,11 +274,11 @@ func newRest(cc *etcd.Cluster, cfg config.Configer, publishurl string, rooturl s
 }
 
 func (rm *restmanager) initWithZone(zone string) error {
-	_, cfg, err := cmd.ForceZone(rm.configer, zone, true, true)
+	_, clust, err := cmd.ForceZone(rm.configer, zone, true)
 	if err != nil {
 		return err
 	}
-	auth, err := rm.initAuther(zone, *cfg, rm.oauthreg)
+	auth, err := rm.initAuther(zone, *clust, rm.oauthreg)
 	if err != nil {
 		return err
 	}
@@ -381,16 +355,6 @@ func (rm *restmanager) setProvider(tp, network, clientid, clientsecret string) (
 	return rm.oauthreg.Create(oauth.ProviderType(tp), network, clientid, clientsecret, "", "", "", "", "", "", "", "")
 }
 
-func (rm *restmanager) setConfig(zone string, authurl string, verifyCert bool) error {
-	cfg, err := rm.configer.GetManagerConfig(zone)
-	if err != nil {
-		return err
-	}
-	cfg.AuthUrl = authurl
-	cfg.VerifyCert = verifyCert
-	return rm.configer.PutManagerConfig(zone, *cfg)
-}
-
 func main() {
 	root.PersistentFlags().StringVarP(&etcdConfig, "etcd", "e", "", "etcd cluster machine Url's. if empty use env ORCA_ETCD_MACHINES which is by default http://localhost:4001")
 	root.PersistentFlags().StringVar(&etcdKey, "etcdkey", "", "the client key for this etcd member if using TLS. if empty use ORCA_ETCD_KEY.")
@@ -404,7 +368,7 @@ func main() {
 	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
 	provider.Flags().StringVar(&providerType, "providertype", "oauth", "type of the new provider")
 
-	root.AddCommand(cmdAdmins, cliConfig, versionCmd, serve, provider)
+	root.AddCommand(cmdAdmins, versionCmd, serve, provider)
 	viper.SetEnvPrefix("orca")
 	viper.SetDefault("etcd_machines", "http://localhost:4001")
 	viper.AutomaticEnv()

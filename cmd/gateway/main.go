@@ -95,7 +95,7 @@ func initWithConfig(gw *config.Gateway) error {
 }
 
 func initWithSettings(zone string) error {
-	cfg, _, err := cmd.ForceZone(configer, zone, true, true)
+	cfg, _, err := cmd.ForceZone(configer, zone, true)
 	if err != nil {
 		return err
 	}

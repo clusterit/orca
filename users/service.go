@@ -100,53 +100,46 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Param(ws.PathParameter("duration", "time in seconds to allow logins").DataType("string")).
 		Operation("permitUser").
 		Returns(200, "OK", Allowance{}))
-	ws.Route(ws.POST("/{zone}/pubkey").To(t.getUserByKey).
+	ws.Route(ws.POST("/pubkey").To(t.getUserByKey).
 		Doc("retrieves the user with the embedded public key").
-		Param(ws.PathParameter("zone", "the zone where to search the user in").DataType("string")).
 		Operation("getUserByKey").
 		Reads("").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PUT("/{user-id}/{key-id}/{zone}/pubkey").To(userRoles(t.addUserKey)).
+	ws.Route(ws.PUT("/{user-id}/{key-id}/pubkey").To(userRoles(t.addUserKey)).
 		Doc("add the given key to the users list of public keys").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
-		Param(ws.PathParameter("zone", "the zone where to search the user in").DataType("string")).
 		Operation("addUserKey").
 		Reads("").
 		Returns(200, "OK", Key{}))
-	ws.Route(ws.DELETE("/{user-id}/{key-id}/{zone}/pubkey").To(userRoles(t.deleteUserKey)).
+	ws.Route(ws.DELETE("/{user-id}/{key-id}/pubkey").To(userRoles(t.deleteUserKey)).
 		Doc("delete the given key to the users list of public keys").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("key-id", "the key-id of the new key").DataType("string")).
-		Param(ws.PathParameter("zone", "the zone where to search the user in").DataType("string")).
 		Operation("deleteUserKey").
 		Returns(200, "OK", Key{}))
-	ws.Route(ws.GET("/{zone}/2fatoken").To(userRoles(t.gen2FAtoken)).
+	ws.Route(ws.GET("/2fatoken").To(userRoles(t.gen2FAtoken)).
 		Doc("generates a 2FA token for the current user and returns an PNG encoded image with the secret").
-		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Operation("gen2FAtoken").
 		Reads("").
 		Returns(200, "OK", []byte{}))
-	ws.Route(ws.GET("/{zone}/{user-id}/{token}/check").To(t.checkToken).
+	ws.Route(ws.GET("/{user-id}/{token}/check").To(t.checkToken).
 		Doc("checks a 2FA token for the given user-id and permits an autologin within the user configured time").
-		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
 		Param(ws.QueryParameter("maxtime", "the maximum number of seconds for the autologin").DataType("int")).
 		Operation("checkToken").
 		Reads("").
 		Returns(200, "OK", ""))
-	ws.Route(ws.PATCH("/{zone}/2fa/{usage}/{token}").To(userRoles(t.use2fa)).
+	ws.Route(ws.PATCH("/2fa/{usage}/{token}").To(userRoles(t.use2fa)).
 		Doc("stores a flag if the user wants 2fa").
 		Param(ws.PathParameter("usage", "enables or disables 2fa").DataType("string")).
 		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
-		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Operation("use2fa").
 		Reads("").
 		Returns(200, "OK", User{}))
-	ws.Route(ws.PATCH("/{zone}/autologin2fa/{duration}").To(userRoles(t.autologin2fa)).
+	ws.Route(ws.PATCH("/autologin2fa/{duration}").To(userRoles(t.autologin2fa)).
 		Doc("updates the duration for which a 2FA is not necessary").
-		Param(ws.PathParameter("zone", "the current zone").DataType("string")).
 		Param(ws.PathParameter("duration", "the duration in seconds within a new OTP is not requred").DataType("int")).
 		Operation("autologin2fa").
 		Reads("").
@@ -235,20 +228,18 @@ func (t *UsersService) permitUser(me *User, request *restful.Request, response *
 
 func (t *UsersService) getUserByKey(request *restful.Request, response *restful.Response) {
 	var pubk string
-	zone := request.PathParameter("zone")
 	err := request.ReadEntity(&pubk)
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	u, _, e := t.Provider.GetByKey(zone, pubk)
+	u, _, e := t.Provider.GetByKey(pubk)
 	rest.HandleEntity(u, e)(request, response)
 }
 
 func (t *UsersService) addUserKey(me *User, request *restful.Request, response *restful.Response) {
 	uid := request.PathParameter("user-id")
 	kid := request.PathParameter("key-id")
-	zone := request.PathParameter("zone")
 	if !allowed(me, uid, response) {
 		return
 	}
@@ -258,13 +249,13 @@ func (t *UsersService) addUserKey(me *User, request *restful.Request, response *
 		response.WriteError(http.StatusInternalServerError, err)
 		return
 	}
-	_, _, e := t.Provider.GetByKey(zone, string(pubk))
+	_, _, e := t.Provider.GetByKey(string(pubk))
 	if e == nil {
 		response.WriteError(http.StatusInternalServerError, rest.JsonError("Key already exists"))
 		return
 	}
 
-	k, err := AsKey(t.Provider, zone, uid, kid, string(pubk))
+	k, err := AsKey(t.Provider, uid, kid, string(pubk))
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
 		return
@@ -275,11 +266,10 @@ func (t *UsersService) addUserKey(me *User, request *restful.Request, response *
 func (t *UsersService) deleteUserKey(me *User, request *restful.Request, response *restful.Response) {
 	uid := request.PathParameter("user-id")
 	kid := request.PathParameter("key-id")
-	zone := request.PathParameter("zone")
 	if !allowed(me, uid, response) {
 		return
 	}
-	k, err := t.Provider.RemoveKey(zone, uid, kid)
+	k, err := t.Provider.RemoveKey(uid, kid)
 	if err != nil {
 		rest.HandleError(err, response)
 		return
@@ -304,7 +294,6 @@ func (t *UsersService) removeAlias(me *User, request *restful.Request, response 
 func (t *UsersService) use2fa(me *User, request *restful.Request, response *restful.Response) {
 	usage := request.PathParameter("usage")
 	token := request.PathParameter("token")
-	zone := request.PathParameter("zone")
 	usg, err := strconv.ParseBool(usage)
 	if err != nil {
 		rest.HandleError(err, response)
@@ -312,12 +301,12 @@ func (t *UsersService) use2fa(me *User, request *restful.Request, response *rest
 	}
 	if usg {
 		// only check the token if we enable the 2FA
-		if err := t.Provider.CheckToken(zone, me.Id, token); err != nil {
+		if err := t.Provider.CheckToken(me.Id, token); err != nil {
 			rest.HandleError(err, response)
 			return
 		}
 	}
-	if err := t.Provider.Use2FAToken(zone, me.Id, usg); err != nil {
+	if err := t.Provider.Use2FAToken(me.Id, usg); err != nil {
 		rest.HandleError(err, response)
 		return
 	}
@@ -327,7 +316,6 @@ func (t *UsersService) use2fa(me *User, request *restful.Request, response *rest
 }
 
 func (t *UsersService) checkToken(request *restful.Request, response *restful.Response) {
-	zone := request.PathParameter("zone")
 	uid := request.PathParameter("user-id")
 	token := request.PathParameter("token")
 	maxtime := request.QueryParameter("maxtime")
@@ -337,12 +325,12 @@ func (t *UsersService) checkToken(request *restful.Request, response *restful.Re
 			rest.HandleError(e, response)
 			return
 		}
-		if err := t.Provider.CheckAndAllowToken(zone, uid, token, int(maxt)); err != nil {
+		if err := t.Provider.CheckAndAllowToken(uid, token, int(maxt)); err != nil {
 			response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
 			return
 		}
 	} else {
-		if err := t.Provider.CheckToken(zone, uid, token); err != nil {
+		if err := t.Provider.CheckToken(uid, token); err != nil {
 			response.WriteError(http.StatusForbidden, rest.JsonError(err.Error()))
 			return
 		}
@@ -351,13 +339,12 @@ func (t *UsersService) checkToken(request *restful.Request, response *restful.Re
 }
 
 func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response *restful.Response) {
-	zone := request.PathParameter("zone")
 	cluster, e := t.Config.Cluster()
 	if e != nil {
 		rest.HandleError(e, response)
 		return
 	}
-	sec, e := t.Provider.Create2FAToken(zone, cluster.Name, me.Id)
+	sec, e := t.Provider.Create2FAToken(cluster.Name, me.Id)
 	if e != nil {
 		rest.HandleError(e, response)
 		return
@@ -372,7 +359,6 @@ func (t *UsersService) gen2FAtoken(me *User, request *restful.Request, response 
 
 func (t *UsersService) autologin2fa(me *User, request *restful.Request, response *restful.Response) {
 	dur := request.PathParameter("duration")
-	zone := request.PathParameter("zone")
 	duration, err := strconv.ParseInt(dur, 10, 0)
 	if err != nil {
 		rest.HandleError(err, response)
@@ -385,7 +371,7 @@ func (t *UsersService) autologin2fa(me *User, request *restful.Request, response
 	// ignore error here. if there is no current allow-instance we get a notfound here
 	t.Provider.Permit(a, 0)
 
-	rest.HandleEntity(t.Provider.SetAutologinAfter2FA(zone, me.Id, int(duration)))(request, response)
+	rest.HandleEntity(t.Provider.SetAutologinAfter2FA(me.Id, int(duration)))(request, response)
 }
 
 func (t *UsersService) parseKey(me *User, request *restful.Request, response *restful.Response) {

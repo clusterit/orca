@@ -51,17 +51,17 @@ type Users interface {
 	RemoveAlias(id, network, alias string) (*User, error)
 	GetAll() ([]User, error)
 	Get(id string) (*User, error)
-	AddKey(zone string, uid, kid string, pubkey string, fp string) (*Key, error)
-	RemoveKey(zone string, uid, kid string) (*Key, error)
+	AddKey(uid, kid string, pubkey string, fp string) (*Key, error)
+	RemoveKey(uid, kid string) (*Key, error)
 	Update(uid, username string, rolz Roles) (*User, error)
 	Permit(a Allowance, ttlSecs uint64) error
 	Delete(uid string) (*User, error)
-	GetByKey(zone string, pubkey string) (*User, *Key, error)
-	Create2FAToken(zone, domain, uid string) (string, error)
-	SetAutologinAfter2FA(zone, uid string, duration int) (*User, error)
-	Use2FAToken(zone, uid string, use bool) error
-	CheckToken(zone, uid, token string) error
-	CheckAndAllowToken(zone, uid, token string, maxAllowance int) error
+	GetByKey(pubkey string) (*User, *Key, error)
+	Create2FAToken(domain, uid string) (string, error)
+	SetAutologinAfter2FA(uid string, duration int) (*User, error)
+	Use2FAToken(uid string, use bool) error
+	CheckToken(uid, token string) error
+	CheckAndAllowToken(uid, token string, maxAllowance int) error
 	Close() error
 }
 
@@ -97,7 +97,7 @@ func ParseKey(pubkey string) (*Key, error) {
 	return &k, nil
 }
 
-func AsKey(usrs Users, zone, uid, kid, pubkey string) (*Key, error) {
+func AsKey(usrs Users, uid, kid, pubkey string) (*Key, error) {
 	k, err := ParseKey(pubkey)
 	if err != nil {
 		return nil, err
@@ -105,5 +105,5 @@ func AsKey(usrs Users, zone, uid, kid, pubkey string) (*Key, error) {
 	if kid != "" {
 		k.Id = kid
 	}
-	return usrs.AddKey(zone, uid, k.Id, k.Value, k.Fingerprint)
+	return usrs.AddKey(uid, k.Id, k.Value, k.Fingerprint)
 }

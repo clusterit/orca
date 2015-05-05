@@ -16,7 +16,9 @@ core-pages {
 .settingscard .labeltext {
 }
 .settingscard .widget {
-  min-width: 10em;
+  min-width: 20em;
+  text-align: right;
+  margin-right: 5px;
 }
 
 .settingscard .labelhelp {
@@ -39,6 +41,8 @@ core-pages {
 textarea {
   font-family: monospace;
   color: #aaa;
+  width: 70%;
+  height: 100px;
 }
 
 #actionbar {

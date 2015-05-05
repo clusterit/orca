@@ -13,7 +13,7 @@ import (
 	"github.com/clusterit/orca/etcd"
 )
 
-func webInitZone(zone string, cfg config.ManagerConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
+func webInitZone(zone string, cfg config.ClusterConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
 	blk, _ := pem.Decode([]byte(cfg.Key))
 	jwtPk, err := x509.ParsePKCS1PrivateKey(blk.Bytes)
 	if err != nil {
@@ -23,7 +23,7 @@ func webInitZone(zone string, cfg config.ManagerConfig, reg oauth.AuthRegistry) 
 	return jwt.NewAuther(jwtPk, reg), nil
 }
 
-func webSwitchSettings(cfg config.ManagerConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
+func webSwitchSettings(cfg config.ClusterConfig, reg oauth.AuthRegistry) (auth.Auther, error) {
 	blk, _ := pem.Decode([]byte(cfg.Key))
 	jwtPk, err := x509.ParsePKCS1PrivateKey(blk.Bytes)
 	if err != nil {

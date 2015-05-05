@@ -4,7 +4,6 @@
 <link rel="import" href="../keys-element/keys-element.html">
 <link rel="import" href="../users-element/users-element.html">
 <link rel="import" href="../gateway-element/gateway-element.html">
-<link rel="import" href="../webman-element/webman-element.html">
 <link rel="import" href="../oauth-registration/oauth-registration.html">
 <link rel="import" href="../clusterconfig-element/clusterconfig-element.html">
 
@@ -52,22 +51,17 @@
         </div></div>
         <div fit>
           <core-pages fit valueattr="id" selected="{{menuItems[appPage].target}}" id="appPages">
-            <div id="settingspage" layout vertical fit>
-              <paper-tabs selected="{{datatab}}" id="settingstabs">
-                <paper-tab>Account</paper-tab>
-                <paper-tab>Keys</paper-tab>
-              </paper-tabs>
-              <core-pages selected="{{datatab}}" flex on-core-select="{{datatabSelected}}">
-                <settings-element 
+            <div id="settingspage" fit>
+              <settings-element 
                   apiBase="{{apiBase}}" 
-                  zone="{{zone}}" 
                   on-error="{{displayError}}" 
                   user="{{user}}" 
                   details="{{userdetails}}" 
                   on-allowed="{{userRefresh}}"
                   on-userdetails="{{userdetailsChanged}}"></settings-element>
-                <keys-element apiBase="{{apiBase}}" zone="{{zone}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
-              </core-pages>
+            </div>
+            <div id="keyspage" fit>
+              <keys-element apiBase="{{apiBase}}" on-error="{{displayError}}" details="{{userdetails}}" token="{{token}}" fit on-keydeleted="{{userRefresh}}" on-keysaved="{{userRefresh}}"></keys-element>
             </div>
             <div id="cluster" fit>
               <clusterconfig-element apiBase="{{apiBase}}" user="{{user}}" fit on-error="{{displayError}}" zone="{{zone}}"></clusterconfig-element>
@@ -77,9 +71,6 @@
             </div>
             <div id="gateway" fit>
               <gateway-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></gateway-element>
-            </div>
-            <div id="webman" fit>
-              <webman-element apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></webman-element>
             </div>
             <div id="oauth" fit>
               <oauth-registration apiBase="{{apiBase}}" fit user="{{user}}" on-error="{{displayError}}"></oauth-registration>
@@ -124,10 +115,10 @@
 
       menuItems : [
         {target:"settingspage",icon:"social:person",label:"Me", role:"USER"},
+        {target:"keyspage",icon:"communication:vpn-key",label:"Keys", role:"USER"},
         {target:"cluster",icon:"cloud",label:"Cluster", role:"MANAGER",saveable:true},
         {target:"users",icon:"social:people",label:"Users", role:"MANAGER"},
         {target:"gateway",icon:"settings-input-component",label:"Gateway", role:"MANAGER",saveable:true},
-        {target:"webman",icon:"cloud-queue",label:"Manager Config", role:"MANAGER",saveable:true},
         {target:"oauth",icon:"social:domain",label:"Oauth Registry", role:"MANAGER"}
       ],
       allowed : function (items) {
@@ -152,8 +143,8 @@
       userLoaded : function (rsp, detail) {
         this.userdetails = detail.response;
         this.page = "mainpage";
-        this.appPage = 0;
-        this.$.settingstabs.updateBar();
+        //this.appPage = 0;
+        //this.$.settingstabs.updateBar();
       },
       logout : function () {
         this.appPage = 0;

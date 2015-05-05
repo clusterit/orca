@@ -1,6 +1,6 @@
 <link rel="import" href="../elements.html">
 
-<polymer-element name="settings-element" attributes="zone user details apiBase">
+<polymer-element name="settings-element" attributes="user details apiBase">
   <template>
     <link rel="stylesheet" href="settings-element.css">
     <div layout vertical>
@@ -72,21 +72,21 @@
     <core-ajax
       id="gen2fa"
       method="GET"
-      url="{{apiBase}}/users/{{zone}}/2fatoken"
+      url="{{apiBase}}/users/2fatoken"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{tokenGenerated}}"></core-ajax>
     <core-ajax
       id="use2fa"
       method="PATCH"
-      url="{{apiBase}}/users/{{zone}}/2fa/{{use}}/{{enteredToken}}"
+      url="{{apiBase}}/users/2fa/{{use}}/{{enteredToken}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"
       on-core-response="{{user2faSet}}"></core-ajax>
     <core-ajax
       id="autologin2fa"
       method="PATCH"
-      url="{{apiBase}}/users/{{zone}}/autologin2fa/{{autologinSecs}}"
+      url="{{apiBase}}/users/autologin2fa/{{autologinSecs}}"
       headers='{"Authorization":"{{user.token}}"}'
       handleAs="json"></core-ajax>
 

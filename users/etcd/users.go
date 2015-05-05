@@ -155,7 +155,7 @@ func (eu *etcdUsers) Get(id string) (*User, error) {
 	return &u, nil
 }
 
-func (eu *etcdUsers) GetByKey(zone, pubkey string) (*User, *Key, error) {
+func (eu *etcdUsers) GetByKey(pubkey string) (*User, *Key, error) {
 	var (
 		u   User
 		uid string
@@ -194,7 +194,7 @@ func (eu *etcdUsers) GetByKey(zone, pubkey string) (*User, *Key, error) {
 	return nil, nil, common.ErrNotFound
 }
 
-func (eu *etcdUsers) AddKey(zone, uid, kid string, pubkey string, fp string) (*Key, error) {
+func (eu *etcdUsers) AddKey(uid, kid string, pubkey string, fp string) (*Key, error) {
 	k := Key{Id: kid, Fingerprint: fp, Value: pubkey}
 	var u User
 	if err := eu.up.Get(uid, &u); err != nil {
@@ -211,7 +211,7 @@ func (eu *etcdUsers) AddKey(zone, uid, kid string, pubkey string, fp string) (*K
 	return &k, nil
 }
 
-func (eu *etcdUsers) RemoveKey(zone, uid, kid string) (*Key, error) {
+func (eu *etcdUsers) RemoveKey(uid, kid string) (*Key, error) {
 	var u User
 	if err := eu.up.Get(uid, &u); err != nil {
 		return nil, err
@@ -266,7 +266,7 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 	return &u, eu.up.Remove(uid)
 }
 
-func (eu *etcdUsers) Create2FAToken(zone, domain, uid string) (string, error) {
+func (eu *etcdUsers) Create2FAToken(domain, uid string) (string, error) {
 	u, e := eu.Get(uid)
 	if e != nil {
 		return "", e
@@ -284,8 +284,8 @@ func (eu *etcdUsers) Create2FAToken(zone, domain, uid string) (string, error) {
 	return auth_string, nil
 }
 
-func (eu *etcdUsers) CheckAndAllowToken(zone, uid, token string, maxAllowance int) error {
-	if err := eu.CheckToken(zone, uid, token); err != nil {
+func (eu *etcdUsers) CheckAndAllowToken(uid, token string, maxAllowance int) error {
+	if err := eu.CheckToken(uid, token); err != nil {
 		return err
 	}
 	u, e := eu.Get(uid)
@@ -307,7 +307,7 @@ func (eu *etcdUsers) CheckAndAllowToken(zone, uid, token string, maxAllowance in
 	return nil
 }
 
-func (eu *etcdUsers) CheckToken(zone, uid, token string) error {
+func (eu *etcdUsers) CheckToken(uid, token string) error {
 	var secret string
 	if err := eu.twofa.Get(uid, &secret); err != nil {
 		return err
@@ -328,7 +328,7 @@ func (eu *etcdUsers) CheckToken(zone, uid, token string) error {
 	return nil
 }
 
-func (eu *etcdUsers) Use2FAToken(zone, uid string, use bool) error {
+func (eu *etcdUsers) Use2FAToken(uid string, use bool) error {
 	u, e := eu.Get(uid)
 	if e != nil {
 		return e
@@ -340,7 +340,7 @@ func (eu *etcdUsers) Use2FAToken(zone, uid string, use bool) error {
 	return eu.up.Put(uid, u)
 }
 
-func (eu *etcdUsers) SetAutologinAfter2FA(zone, uid string, duration int) (*User, error) {
+func (eu *etcdUsers) SetAutologinAfter2FA(uid string, duration int) (*User, error) {
 	u, e := eu.Get(uid)
 	if e != nil {
 		return nil, e

@@ -1,5 +1,6 @@
 .settingscard {
   padding: 5px;
+  background: white;
 }
 
 .settingscard .label {
@@ -8,7 +9,9 @@
 .settingscard .labeltext {
 }
 .settingscard .widget {
-  min-width: 10em;
+  min-width: 20em;
+  text-align: right;
+  margin-right: 5px;
 }
 
 .settingscard .labelhelp {
@@ -26,6 +29,7 @@
 
 #zonelist {
   margin: 20px;
+  margin-right: 150px;
  
 }
 
@@ -33,4 +37,11 @@
   position: absolute;
   bottom: 20px;
   right: 20px;
+}
+
+textarea {
+  font-family: monospace;
+  color: #aaa;
+  width: 70%;
+  height: 100px;
 }

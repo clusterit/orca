@@ -14,7 +14,7 @@
             This cluster needs exactly one etcd-backendstore.
           </div>
         </div>
-        <paper-input label="Clustername" value="{{config.name}}"></paper-input>
+        <div class="widget"><paper-input label="Clustername" value="{{config.name}}"></paper-input></div>
       </div>
       <div center horizontal layout>
         <div class="label" flex>
@@ -24,8 +24,17 @@
           the authentication provider automatically has an account in the gateway.
           </div>
         </div>
-        <paper-toggle-button class="widget" checked="{{config.selfregister}}"></paper-toggle-button>
+        <div class="widget"><paper-toggle-button checked="{{config.selfregister}}"></paper-toggle-button></div>
       </div>      
+      <div center horizontal layout>
+        <div class="label" flex>
+          <div class="labeltext">JWT Key</div>
+          <div class="labelhelp">Copy&Paste your RSA key to be used for your JWT token in the UI.</div>
+        </div>
+      </div>
+      <div class="jwtkey" >
+        <textarea  placeholder="Paste your JWT key" id="tjwtkey" value="{{config.key}}"></textarea>
+      </div>
       <div id="zones" vertical layout flex >
         <div class="label">
           <div class="labeltext">Zones</div>
@@ -64,7 +73,7 @@
       handleAs="json"
       headers='{"Authorization":"{{user.token}}"}'
       on-core-error="{{showError}}"
-      response="{{config}}"></core-ajax>
+      on-core-response="{{configLoaded}}"></core-ajax>
     <core-ajax
       id="ccsaver"
       method="PUT"
@@ -73,7 +82,7 @@
       contentType="application/json"
       headers='{"Authorization":"{{user.token}}"}'
       on-core-error="{{showError}}"
-      response="{{configLoaded}}"></core-ajax>
+      on-core-response="{{configLoaded}}"></core-ajax>
     <core-ajax
       id="zonesloader"
       method="GET"
@@ -105,9 +114,19 @@
       zones: [],
       removezone:"",
       newzone:"",
+      jwtkey:"",
       
       ready : function () {
       },
+      configLoaded : function (rsp, detail) {
+        this.config = detail.response;
+        this.updateText(this.config.key);
+      },
+      updateText : function (val) {
+        this.$.tjwtkey.value = val;
+        this.jwtkey = val;
+        //this.$.pjwtkey.update(this.$.tjwtkey);
+      },      
       doSave : function () {
         this.$.ccsaver.xhrArgs = {
           body : JSON.stringify(this.config)

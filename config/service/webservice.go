@@ -38,16 +38,6 @@ func (t *ConfigService) Register(root string, c *restful.Container) {
 		Operation("setClusterConfig").
 		Reads(config.ClusterConfig{}).
 		Writes(config.ClusterConfig{}))
-	ws.Route(ws.PUT("/{zone}/mgrConfig").To(mgr(t.putManagerConfig)).
-		Doc("Store the ManagerConfig config for a given zone").
-		Param(ws.PathParameter("zone", "the zone to put the ManagerConfig config to").DataType("string")).
-		Operation("putManagerConfig").
-		Reads(config.ManagerConfig{}))
-	ws.Route(ws.GET("/{zone}/mgrConfig").To(mgr(t.getManagerConfig)).
-		Doc("Get the ManagerConfig config for a given zone").
-		Param(ws.PathParameter("zone", "the zone to read the ManagerConfig config from").DataType("string")).
-		Operation("getManagerConfig").
-		Writes(config.ManagerConfig{}))
 	ws.Route(ws.PUT("/{zone}/gateway").To(mgr(t.putGateway)).
 		Doc("Store the Gateway config for a given zone").
 		Param(ws.PathParameter("zone", "the stzoneage to put the Gateway config to").DataType("string")).
@@ -94,7 +84,7 @@ func (t *ConfigService) putZone(u *users.User, rq *restful.Request, rsp *restful
 		rest.HandleError(err, rsp)
 		return
 	}
-	_, _, err := config.InitZone(t.Config, z, true, true)
+	_, err := config.InitZone(t.Config, z, true)
 	if err != nil {
 		t.Config.DropZone(z)
 		rest.HandleError(err, rsp)
@@ -110,26 +100,6 @@ func (t *ConfigService) deleteZone(u *users.User, rq *restful.Request, rsp *rest
 		return
 	}
 	rsp.WriteEntity(z)
-}
-
-func (t *ConfigService) putManagerConfig(u *users.User, rq *restful.Request, rsp *restful.Response) {
-	var mc config.ManagerConfig
-	z := rq.PathParameter("zone")
-	err := rq.ReadEntity(&mc)
-	if err != nil {
-		rest.HandleError(err, rsp)
-		return
-	}
-	if err := t.Config.PutManagerConfig(z, mc); err != nil {
-		rest.HandleError(err, rsp)
-		return
-	}
-	rsp.WriteEntity(mc)
-}
-
-func (t *ConfigService) getManagerConfig(u *users.User, rq *restful.Request, rsp *restful.Response) {
-	z := rq.PathParameter("zone")
-	rest.HandleEntity(t.Config.GetManagerConfig(z))(rq, rsp)
 }
 
 func (t *ConfigService) putGateway(u *users.User, rq *restful.Request, rsp *restful.Response) {
