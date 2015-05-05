@@ -13,8 +13,8 @@ import (
 )
 
 type UserFetcher interface {
-	UserByKey(zone, key string) (*users.User, error)
-	CheckToken(zone, uid, token string, maxtime int) error
+	UserByKey(key string) (*users.User, error)
+	CheckToken(uid, token string, maxtime int) error
 }
 
 type httpFetcher struct {
@@ -29,7 +29,7 @@ func NewHttpFetcher(cc *etcd.Cluster) (UserFetcher, error) {
 	return &httpFetcher{managerConfig: cfg}, nil
 }
 
-func (hf *httpFetcher) CheckToken(zone, uid, token string, maxtime int) error {
+func (hf *httpFetcher) CheckToken(uid, token string, maxtime int) error {
 	urls, err := hf.managerConfig.GetValues("/" + cmd.ManagerService)
 	if err != nil {
 		return err
@@ -39,9 +39,9 @@ func (hf *httpFetcher) CheckToken(zone, uid, token string, maxtime int) error {
 	}
 	var res string
 	for _, url := range urls {
-		serviceUrl := fmt.Sprintf("%s/users/%s/%s/%s/check?maxtime=%d", url, zone, uid, token, maxtime)
+		serviceUrl := fmt.Sprintf("%s/users/%s/%s/check?maxtime=%d", url, uid, token, maxtime)
 		if strings.HasSuffix(url, "/") {
-			serviceUrl = fmt.Sprintf("%susers/%s/%s/%s/check?maxtime=%d", url, zone, uid, token, maxtime)
+			serviceUrl = fmt.Sprintf("%susers/%s/%s/check?maxtime=%d", url, uid, token, maxtime)
 		}
 		r := napping.Request{
 			Url:    serviceUrl,
@@ -67,7 +67,7 @@ func (hf *httpFetcher) CheckToken(zone, uid, token string, maxtime int) error {
 	return fmt.Errorf("no working manager found in configuration")
 }
 
-func (hf *httpFetcher) UserByKey(zone, key string) (*users.User, error) {
+func (hf *httpFetcher) UserByKey(key string) (*users.User, error) {
 	var u users.User
 	urls, err := hf.managerConfig.GetValues("/" + cmd.ManagerService)
 	if err != nil {
@@ -77,9 +77,9 @@ func (hf *httpFetcher) UserByKey(zone, key string) (*users.User, error) {
 		return nil, fmt.Errorf("no managers registered in configuration")
 	}
 	for _, url := range urls {
-		serviceUrl := fmt.Sprintf("%s/users/%s/pubkey", url, zone)
+		serviceUrl := fmt.Sprintf("%s/users/pubkey", url)
 		if strings.HasSuffix(url, "/") {
-			serviceUrl = fmt.Sprintf("%susers/%s/pubkey", url, zone)
+			serviceUrl = fmt.Sprintf("%susers/pubkey", url)
 		}
 		r := napping.Request{
 			Url:     serviceUrl,

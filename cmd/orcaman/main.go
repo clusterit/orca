@@ -365,7 +365,7 @@ func main() {
 	root.PersistentFlags().StringVarP(&listen, "listen", "l", ":9011", "listen address for the endpoint")
 	root.PersistentFlags().StringVar(&clilisten, "clilisten", "", "listen address for the cli endpoint. if empty use the 'listen' address")
 	root.PersistentFlags().BoolVar(&useweb, "useweb", true, "start a web UI with oauth")
-	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with basic auth")
+	root.PersistentFlags().BoolVar(&usecli, "usecli", true, "start a CLI with token auth")
 	provider.Flags().StringVar(&providerType, "providertype", "oauth", "type of the new provider")
 
 	root.AddCommand(cmdAdmins, versionCmd, serve, provider)

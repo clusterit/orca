@@ -150,7 +150,7 @@ func checkAllowed(sessid []byte, u *users.User) error {
 
 func keyAuth(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
 	pubk := string(ssh.MarshalAuthorizedKey(key))
-	usr, err := fetcher.UserByKey(zone, strings.TrimSpace(pubk))
+	usr, err := fetcher.UserByKey(strings.TrimSpace(pubk))
 	if err != nil {
 		Log(logging.Debug, "remote: %s: cannot fetch key for user '%s': %s", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
@@ -175,7 +175,7 @@ func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, erro
 	if ttl > configuration.MaxAutologin2FA {
 		ttl = configuration.MaxAutologin2FA
 	}
-	err := fetcher.CheckToken(zone, usr.Id, string(password), ttl)
+	err := fetcher.CheckToken(usr.Id, string(password), ttl)
 	if err != nil {
 		Log(logging.Debug, "remote: %s: wrong token for user '%s': '%s'", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
