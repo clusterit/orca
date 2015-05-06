@@ -20,7 +20,11 @@ core-pages {
   text-align: right;
   margin-right: 5px;
 }
-
+.settingscard .lwidget {
+  min-width: 20em;
+  text-align: left;
+  margin-right: 5px;
+}
 .settingscard .labelhelp {
   color: grey;
   font-style: italic;
