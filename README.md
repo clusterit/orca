@@ -198,7 +198,9 @@ the current one time password displayed in your app.
 As you can see in the screenshot, there is a caching option. If you don't want
 to enter your OTP every time you can use the slider to let the gateway cache 
 your successful authentication. Please note that the administrator of the gateway
-can overwrite this value with an upper limit! 
+can overwrite this value with an upper limit! The default value in the gateway
+is 0, so it doesn't matter what the user set; a zero value in the gateway simply
+disables 2FA caching.
 
 ## Oauth Providers
 
