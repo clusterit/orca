@@ -12,5 +12,6 @@ if [ ! -d "/data/etcd1.etcd" ]; then
 fi
 
 /work/src/github.com/clusterit/orca/packaging/orcaman serve >orcaman.logs 2>&1 &
+export ORCA_BIND=0.0.0.0:22
 /work/src/github.com/clusterit/orca/packaging/sshgw serve >sshgw.logs 2>&1
 

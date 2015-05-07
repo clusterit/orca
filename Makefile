@@ -33,7 +33,7 @@ testdrive:
 	docker build -t orca .
 
 runtestdrive:
-	docker run -p 9011:9011 -p 2022:2022 -v $(HOME)/tmp/data:/data -e CLIENTID=$(GITHUB_CLIENTID) -e CLIENTSECRET=$(GITHUB_CLIENTSECRET) -e USERID=ulrichSchreiner orca
+	docker run -p 9011:9011 -p 2022:22 -v $(HOME)/tmp/data:/data -e CLIENTID=$(GITHUB_CLIENTID) -e CLIENTSECRET=$(GITHUB_CLIENTSECRET) -e USERID=ulrichSchreiner orca
 	
 clean:
 	rm -rf $(OUTROOT)/*

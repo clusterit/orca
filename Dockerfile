@@ -17,8 +17,7 @@ run mkdir -p /work/src/github.com/clusterit/orca
 add . /work/src/github.com/clusterit/orca/
 run echo '{ "allow_root": true }' > /root/.bowerrc
 run cd /work/src/github.com/clusterit/orca && make depends && make
-expose 9011 2022
+expose 9011 22
 volume /data
 add scripts/test.sh /startup.sh
-user orca
 cmd /startup.sh

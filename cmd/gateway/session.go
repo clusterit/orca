@@ -195,6 +195,7 @@ func (cs *clientSession) handleChannel(con ssh.Conn, channel ssh.Channel, reqs <
 			switch req.Type {
 			case "exec":
 				exc := parseStrings(req.Payload, 1)
+				cs.debugf("ssh exec: %v", exc)
 				go cs.connectRemote(fmt.Sprintf("%s:%d", cs.remoteHost, cs.remotePort), channel, &exc[0])
 			case "shell":
 				go cs.connectRemote(fmt.Sprintf("%s:%d", cs.remoteHost, cs.remotePort), channel, nil)
@@ -228,7 +229,7 @@ func (cs *clientSession) connectToBackend(backend string, user string, ag agent.
 		Auth: []ssh.AuthMethod{ssh.PublicKeysCallback(ag.Signers)},
 	}
 
-	//client, err := ssh.Dial("tcp", backend, sshConfig)
+	cs.debugf("connect to backend %s with user %s", backend, user)
 	client, err := dial("tcp", backend, sshConfig)
 
 	if err != nil {
@@ -248,6 +249,7 @@ func (cs *clientSession) connectToBackend(backend string, user string, ag agent.
 	if err != nil {
 		return nil, fmt.Errorf("agentforward error: %s", err)
 	}
+	cs.debugf("opening new clientsession for user %s", user)
 	err = client.newSession()
 	if err != nil {
 		client.close()
@@ -267,6 +269,7 @@ func (cs *clientSession) connectRemote(backend string, channel ssh.Channel, cmd 
 		return
 	}
 	defer cs.backend.close()
+
 	sess := cs.backend.session
 
 	cs.forwardBufferedRequest()
@@ -289,27 +292,36 @@ func (cs *clientSession) connectRemote(backend string, channel ssh.Channel, cmd 
 	go io.Copy(channel.Stderr(), stderrP)
 	go io.Copy(stdinP, channel)
 	if cmd != nil {
+		cs.debugf("start remote command %s", *cmd)
 		e = sess.Start(*cmd)
 	} else {
+		cs.debugf("opening remote shell")
 		e = sess.Shell()
 	}
 	if e != nil {
 		cs.errorf("opening shell: %s", e)
 		return
 	}
-
 	e = sess.Wait()
+	exitCode := 0
 	if e != nil {
 		ee, ok := e.(*ssh.ExitError)
 		if ok {
 			wm := ee.Waitmsg
 			cs.errorf("wait for shell, signal:%s, status:%d, msg:%s", wm.Signal(), wm.ExitStatus(), wm.Msg())
+			exitCode = wm.ExitStatus()
 		} else {
 			cs.errorf("wait for shell: %s", e)
+			exitCode = 255 // ???
 		}
 		return
 	}
-	//	}
+	if cmd != nil {
+		// TODO: send signal back!
+		resbuf := make([]byte, 4)
+		binary.BigEndian.PutUint32(resbuf, uint32(exitCode))
+		channel.SendRequest("exit-status", false, resbuf)
+	}
 }
 
 func (cs *clientSession) handleBackendChannel(tp string, nch <-chan ssh.NewChannel) error {

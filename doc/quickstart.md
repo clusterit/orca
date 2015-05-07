@@ -16,7 +16,7 @@ of your registered application in the environmentvariables `GITHUB_CLIENTID` and
 included `etcd` stores its values in your `$HOME` folder in the `data` directory:
 
 ```
-docker run -p 9011:9011 -p 2022:2022 -v $HOME/data:/data -e CLIENTID=$GITHUB_CLIENTID -e CLIENTSECRET=$GITHUB_CLIENTSECRET -e USERID=$GITHUB_USERID ulrichschreiner/orca-testdrive
+docker run -p 9011:9011 -p 2022:22 -v $HOME/data:/data -e CLIENTID=$GITHUB_CLIENTID -e CLIENTSECRET=$GITHUB_CLIENTSECRET -e USERID=$GITHUB_USERID ulrichschreiner/orca-testdrive
 ```
 
 Now point your browser to *http://localhost:9011* and login!
