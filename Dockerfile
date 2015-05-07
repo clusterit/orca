@@ -9,14 +9,16 @@ run mkdir /work
 run mkdir /data
 run chown orca:orca /work
 run chown orca:orca /data
-user orca
 run git config --global url."https://".insteadOf git://
 run cd /work && mkdir src pkg bin
 env GOPATH=/work
 env PATH=/work/bin:$PATH
-run go get github.com/clusterit/orca/...
+run mkdir -p /work/src/github.com/clusterit/orca
+add . /work/src/github.com/clusterit/orca/
+run echo '{ "allow_root": true }' > /root/.bowerrc
 run cd /work/src/github.com/clusterit/orca && make depends && make
 expose 9011 2022
 volume /data
-add startup.sh /startup.sh
+add scripts/test.sh /startup.sh
+user orca
 cmd /startup.sh

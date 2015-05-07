@@ -9,6 +9,5 @@ if [ ! -d "/data/etcd1.etcd" ]; then
 fi
 
 /work/src/github.com/clusterit/orca/packaging/orcaman serve >orcaman.logs 2>&1 &
-sleep 3
 /work/src/github.com/clusterit/orca/packaging/sshgw serve >sshgw.logs 2>&1
 

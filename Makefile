@@ -28,6 +28,12 @@ depends:
 
 glock:
 	glock save github.com/clusterit/orca
+
+testdrive:
+	docker build -t orca .
+
+runtestdrive:
+	docker run -p 9011:9011 -p 2022:2022 -v $(HOME)/tmp/data:/data -e CLIENTID=$(GITHUB_CLIENTID) -e CLIENTSECRET=$(GITHUB_CLIENTSECRET) -e USERID=ulrichSchreiner orca
 	
 clean:
 	rm -rf $(OUTROOT)/*
