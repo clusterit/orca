@@ -293,3 +293,5 @@ Host gitlabgw
    ForwardAgent yes
 ```
 where `gitlabgw` is the adress of `orca`. Now you can use `git` commands like `git clone git@gitlab@gitlabgw:user/test.git` and `git` will do agent forwarding. If you enabled 2FA in `orca` you must have a correct private key AND you will be prompted for a password (your TOTP).
+
+Last but not least you can configure `orca` to use `gitlab` as the default host. And now you don't see any difference, you can do a `git clone git@gitlabgw:user/test.git` and `orca` will forward the request to your internal server `gitlab`.
