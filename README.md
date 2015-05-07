@@ -28,6 +28,8 @@ backbone to store all the public keys.
 
 ## Install/Build
 
+  For [quick testdrive](doc/quickstart.md) there is a docker image!
+
 To build `orca` you need `make` `bower` and `go`.
 
 Create a new workspace in your home and execute the included `setup.sh`. You do not
@@ -57,24 +59,24 @@ If your `etcd` cluster is not accessible via `http://localhost:4001` you can
 specify a different location via the `-e ...` flag. You can also name your
 zone with `-z myhomezone`.
 
- In a production you should use an `etcd` cluster with `https` and client
- certificates. You can specifiy the clustermembers with `-e https://<etcd-member>` 
- and also specify the `--etcdkey`, `--etcdcert` (key and cert of the client) and 
- `--etcdca` (the cert of the rootca; not necessarily needed). Another option are the
- environment variables:
+In a production you should use an `etcd` cluster with `https` and client
+certificates. You can specifiy the clustermembers with `-e https://<etcd-member>` 
+and also specify the `--etcdkey`, `--etcdcert` (key and cert of the client) and 
+`--etcdca` (the cert of the rootca; not necessarily needed). Another option are the
+environment variables:
   - ORCA_ETCD_MACHINES
   - ORCA_ETCD_KEY
   - ORCA_ETCD_CERT
   - ORCA_ETCD_CA
 
- If you want a testdrive, start an etcd-cluster with `goreman start` in the testing
- subdirectory. You can then
- ```
- cd testing
- export ORCA_ETCD_MACHINES=https://localhost:4001,https://localhost:4002,https://localhost:4003
- export ORCA_ETCD_KEY=`pwd`/ssl/client.key
- export ORCA_ETCD_CERT=`pwd`/ssl/client.cert
- ```
+If you want a testdrive, start an etcd-cluster with `goreman start` in the testing
+subdirectory. You can then
+```
+cd testing
+export ORCA_ETCD_MACHINES=https://localhost:4001,https://localhost:4002,https://localhost:4003
+export ORCA_ETCD_KEY=`pwd`/ssl/client.key
+export ORCA_ETCD_CERT=`pwd`/ssl/client.cert
+```
  
 `orcaman` uses an external Oauth provider to authenticate. So first of all, please
 register a new application with your github account, navigate to your settings
@@ -140,16 +142,24 @@ gateway
 If you want to connect to a known computer via the gateway, you should first
 add your keys to your agent:
 ```
-ssh-add
+ssh-add <your-key-file>
 ```
+You can leave the filename and `ssh-add` will add your default keys.
+
 After that you can try to login (please accept the server key; you can change 
 it via `orcaman`):
 ```
 ssh -A -p 2022 usc@192.168.0.21@localhost
 usc@192.168.0.21@localhost's password:
 ```
-but the gateway denies access and prompts for a password (which will also not be
-accepted):
+As you can see, the address of the server uses the form 
+`user@<your-server>@gateway`. You can also use `ssh -l user@<your-server> gateway`
+to specify the user, because the userid must include the name of the target server. 
+And as a third option you can configure a default server
+where the gateway will delegate a call; in this case you can omit `<your-server>`.
+
+In the upper example the gateway denies access and prompts for a password (which 
+will also not be accepted because you don't have one):
 
 ```
 2015/04/18 16:55:48 [DEBUG] remote: 127.0.0.1:55746: cannot fetch key for user 'usc@192.168.0.21': HTTP 404: {"error":"entity could not be found"}
