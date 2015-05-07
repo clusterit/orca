@@ -283,3 +283,13 @@ to set two environment variables:
 
 When both variables are set, you can simply call `cli` to see all options. 
 
+## Tips
+
+### Using gitlab
+
+When using `git` with `orca` in front of gitlab, you must use agent forwarding. So create a file named `$HOME/.ssh/config` with a content like:
+```
+Host gitlabgw
+   ForwardAgent yes
+```
+where `gitlabgw` is the adress of `orca`. Now you can use `git` commands like `git clone git@gitlab@gitlabgw:user/test.git` and `git` will do agent forwarding. If you enabled 2FA in `orca` you must have a correct private key AND you will be prompted for a password (your TOTP).
