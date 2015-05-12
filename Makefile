@@ -35,5 +35,16 @@ testdrive:
 runtestdrive:
 	docker run -p 9011:9011 -p 2022:22 -v $(HOME)/tmp/data:/data -e CLIENTID=$(GITHUB_CLIENTID) -e CLIENTSECRET=$(GITHUB_CLIENTSECRET) -e USERID=ulrichSchreiner orca
 	
+testsupport:
+	docker pull elcolio/etcd:latest
+
+test:
+	go test ./...
+	
+fulltest: testsupport test
+
+conveytest:
+	goconvey -depth=3
+	
 clean:
 	rm -rf $(OUTROOT)/*
