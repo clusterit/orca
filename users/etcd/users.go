@@ -37,6 +37,9 @@ type etcdUsers struct {
 	al     etcd.Persister
 	twofa  etcd.Persister
 	idtoks etcd.Persister
+
+	// used for testing of 2FA
+	scratchCodes []int
 }
 
 func New(cl *etcd.Cluster) (Users, error) {
@@ -219,9 +222,21 @@ func (eu *etcdUsers) GetByKey(pubkey string) (*User, *Key, error) {
 
 func (eu *etcdUsers) AddKey(uid, kid string, pubkey string, fp string) (*Key, error) {
 	k := Key{Id: kid, Fingerprint: fp, Value: pubkey}
-	var u User
-	if err := eu.up.Get(uid, &u); err != nil {
+	u, err := eu.Get(uid)
+	if err != nil {
 		return nil, err
+	}
+	uid = u.Id
+	var found *Key
+	for _, k := range u.Keys {
+		if k.Fingerprint == fp {
+			found = &k
+			break
+		}
+	}
+	if found != nil {
+		// key with same FP already exists, do nothing
+		return found, nil
 	}
 	u.Keys = append(u.Keys, k)
 	if err := eu.up.Put(uid, &u); err != nil {
@@ -235,10 +250,11 @@ func (eu *etcdUsers) AddKey(uid, kid string, pubkey string, fp string) (*Key, er
 }
 
 func (eu *etcdUsers) RemoveKey(uid, kid string) (*Key, error) {
-	var u User
-	if err := eu.up.Get(uid, &u); err != nil {
+	u, err := eu.Get(uid)
+	if err != nil {
 		return nil, err
 	}
+	uid = u.Id
 	var newkeys []Key
 	var found Key
 
@@ -257,26 +273,35 @@ func (eu *etcdUsers) RemoveKey(uid, kid string) (*Key, error) {
 }
 
 func (eu *etcdUsers) Update(uid, username string, rolz Roles) (*User, error) {
-	var u User
-	if err := eu.up.Get(uid, &u); err != nil {
+	u, err := eu.Get(uid)
+	if err != nil {
 		return nil, err
 	}
 	u.Name = username
 	u.Roles = rolz
-	return &u, eu.up.Put(uid, &u)
+	return u, eu.up.Put(u.Id, u)
 }
 
 func (eu *etcdUsers) Permit(a Allowance, ttlSecs uint64) error {
+	u, err := eu.Get(a.Uid)
+	if err != nil {
+		return err
+	}
+	uid := u.Id
 	if ttlSecs == 0 {
-		logger.Infof("remove allowance for %s", a.Uid)
-		return eu.pm.Remove(a.Uid)
+		logger.Infof("remove allowance for %s", uid)
+		return eu.pm.Remove(uid)
 	}
 	a.Until = time.Now().UTC().Add(time.Second * time.Duration(ttlSecs))
-	return eu.pm.PutTtl(a.Uid, ttlSecs, &a)
+	return eu.pm.PutTtl(uid, ttlSecs, &a)
 }
 
 func (eu *etcdUsers) Delete(uid string) (*User, error) {
-	var u User
+	u, e := eu.Get(uid)
+	if e != nil {
+		return nil, e
+	}
+	uid = u.Id
 	if err := eu.up.Get(uid, &u); err != nil {
 		return nil, err
 	}
@@ -286,7 +311,7 @@ func (eu *etcdUsers) Delete(uid string) (*User, error) {
 		}
 	}
 	eu.pm.Remove(uid)
-	return &u, eu.up.Remove(uid)
+	return u, eu.up.Remove(uid)
 }
 
 func (eu *etcdUsers) Create2FAToken(domain, uid string) (string, error) {
@@ -315,6 +340,7 @@ func (eu *etcdUsers) CheckAndAllowToken(uid, token string, maxAllowance int) err
 	if e != nil {
 		return e
 	}
+	uid = u.Id
 	permit := u.AutologinAfter2FA
 	if maxAllowance < permit {
 		permit = maxAllowance
@@ -325,7 +351,7 @@ func (eu *etcdUsers) CheckAndAllowToken(uid, token string, maxAllowance int) err
 			Uid:       uid,
 			Until:     time.Now(), // will be set in the Permit function
 		}
-		return eu.Permit(a, uint64(maxAllowance))
+		return eu.Permit(a, uint64(permit))
 	}
 	return nil
 }
@@ -337,9 +363,10 @@ func (eu *etcdUsers) CheckToken(uid, token string) error {
 	}
 
 	otpc := &dgoogauth.OTPConfig{
-		Secret:      secret,
-		WindowSize:  3,
-		HotpCounter: 0,
+		Secret:       secret,
+		WindowSize:   3,
+		HotpCounter:  0,
+		ScratchCodes: eu.scratchCodes,
 	}
 	ok, err := otpc.Authenticate(token)
 	if err != nil {
@@ -358,9 +385,9 @@ func (eu *etcdUsers) Use2FAToken(uid string, use bool) error {
 	}
 	u.Use2FA = use
 	if !use {
-		eu.twofa.Remove(uid)
+		eu.twofa.Remove(u.Id)
 	}
-	return eu.up.Put(uid, u)
+	return eu.up.Put(u.Id, u)
 }
 
 func (eu *etcdUsers) SetAutologinAfter2FA(uid string, duration int) (*User, error) {
@@ -369,7 +396,7 @@ func (eu *etcdUsers) SetAutologinAfter2FA(uid string, duration int) (*User, erro
 		return nil, e
 	}
 	u.AutologinAfter2FA = duration
-	return u, eu.up.Put(uid, u)
+	return u, eu.up.Put(u.Id, u)
 }
 
 func (eu *etcdUsers) Close() error {
