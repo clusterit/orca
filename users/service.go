@@ -8,7 +8,6 @@ import (
 	"code.google.com/p/rsc/qr"
 
 	"github.com/clusterit/orca/auth"
-	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/rest"
 	"gopkg.in/emicklei/go-restful.v1"
@@ -171,16 +170,6 @@ func (t *UsersService) createUser(me *User, request *restful.Request, response *
 		return
 	}
 	network := request.PathParameter("network")
-	if network == common.OrcaPrefix {
-		// we have an internal ID, do update
-		usr, e := t.Provider.Get(u.Id)
-		if e != nil {
-			rest.HandleError(e, response)
-			return
-		}
-		u.Id = usr.Id
-		network = ""
-	}
 	res, err := t.Provider.Create(network, u.Id, u.Name, u.Roles)
 	if err != nil {
 		rest.HandleError(err, response)
@@ -199,20 +188,18 @@ func (t *UsersService) getUser(u *User, request *restful.Request, response *rest
 
 func (t *UsersService) deleteUser(me *User, request *restful.Request, response *restful.Response) {
 	uid := request.PathParameter("user-id")
-	if !allowed(me, uid, response) {
-		return
+	if allowed(me, uid, response) {
+		rest.HandleEntity(t.Provider.Delete(uid))(request, response)
 	}
-	rest.HandleEntity(t.Provider.Delete(uid))(request, response)
 }
 
 func (t *UsersService) updateUser(me *User, request *restful.Request, response *restful.Response) {
 	uid := request.PathParameter("user-id")
 	name := request.QueryParameter("name")
 	rlz := request.Request.Form["role"]
-	if !allowed(me, uid, response) {
-		return
+	if allowed(me, uid, response) {
+		rest.HandleEntity(t.Provider.Update(uid, name, roles(rlz)))(request, response)
 	}
-	rest.HandleEntity(t.Provider.Update(uid, name, roles(rlz)))(request, response)
 }
 
 func (t *UsersService) updateUserIdToken(me *User, request *restful.Request, response *restful.Response) {
