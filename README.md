@@ -1,7 +1,7 @@
 ![Orca](doc/img/orca_sm.png)
 
 # Orca!
-Hi! `orca`is a SSH gateway comparable to a reverse HTTP proxy. You 
+`orca`is a SSH gateway comparable to a reverse HTTP proxy. You 
 can use `orca` to enable your employees to connect to internal servers without 
 the need to build a VPN. Simply put `orca` in front of your servers and you can 
 connect to any backend server via SSH.
