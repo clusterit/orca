@@ -44,7 +44,7 @@ test:
 fulltest: testsupport test
 
 conveytest:
-	goconvey -depth=3
+	goconvey -depth=3 -timeout=10s
 	
 clean:
 	rm -rf $(OUTROOT)/*
