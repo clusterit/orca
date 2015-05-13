@@ -1,6 +1,8 @@
 package testsupport
 
 import (
+	"os"
+
 	"github.com/clusterit/orca/etcd"
 )
 
@@ -29,30 +31,34 @@ func New() (TS, error) {
 }
 
 func (t *ts) StartEtcd() (*etcd.Cluster, error) {
-	if t.etcdid != "" {
-		t.StopEtcd()
-	}
-	containerConfig := &dockerclient.ContainerConfig{
-		Image: "elcolio/etcd:latest",
-	}
-	containerId, err := t.client.CreateContainer(containerConfig, "orcaetcd")
-	if err != nil {
-		return nil, err
-	}
-	t.etcdid = containerId
-	hostConfig := &dockerclient.HostConfig{}
+	etcdServer := os.Getenv("TEST_ETCD_MACHINE")
+	if etcdServer == "" {
+		if t.etcdid != "" {
+			t.StopEtcd()
+		}
+		containerConfig := &dockerclient.ContainerConfig{
+			Image: "elcolio/etcd:latest",
+		}
+		containerId, err := t.client.CreateContainer(containerConfig, "")
+		if err != nil {
+			return nil, err
+		}
+		t.etcdid = containerId
+		hostConfig := &dockerclient.HostConfig{}
 
-	err = t.client.StartContainer(containerId, hostConfig)
-	if err != nil {
-		t.StopEtcd()
-		return nil, err
+		err = t.client.StartContainer(containerId, hostConfig)
+		if err != nil {
+			t.StopEtcd()
+			return nil, err
+		}
+		info, err := t.client.InspectContainer(containerId)
+		if err != nil {
+			t.StopEtcd()
+			return nil, err
+		}
+		etcdServer = "http://" + info.NetworkSettings.IPAddress + ":4001"
 	}
-	info, err := t.client.InspectContainer(containerId)
-	if err != nil {
-		t.StopEtcd()
-		return nil, err
-	}
-	cls, err := etcd.Init([]string{"http://" + info.NetworkSettings.IPAddress + ":4001"})
+	cls, err := etcd.Init([]string{etcdServer})
 	if err != nil {
 		t.StopEtcd()
 		return nil, err

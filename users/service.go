@@ -126,7 +126,7 @@ func (t *UsersService) Register(root string, c *restful.Container) {
 		Reads("").
 		Returns(200, "OK", []byte{}))
 	ws.Route(ws.GET("/{user-id}/{token}/check").To(t.checkToken).
-		Doc("checks a 2FA token for the given user-id and permits an autologin within the user configured time").
+		Doc("checks a 2FA token for the given user-id and permits an autologin within the user configured time only if there is a maxtime parameter; without this parameter, this is only a one-time grant").
 		Param(ws.PathParameter("user-id", "identifier of the user").DataType("string")).
 		Param(ws.PathParameter("token", "the token to validate the request").DataType("string")).
 		Param(ws.QueryParameter("maxtime", "the maximum number of seconds for the autologin").DataType("int")).
@@ -208,7 +208,7 @@ func (t *UsersService) deleteUser(me *User, request *restful.Request, response *
 func (t *UsersService) updateUser(me *User, request *restful.Request, response *restful.Response) {
 	uid := request.PathParameter("user-id")
 	name := request.QueryParameter("name")
-	rlz := request.Request.Form["roles"]
+	rlz := request.Request.Form["role"]
 	if !allowed(me, uid, response) {
 		return
 	}
