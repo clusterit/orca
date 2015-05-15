@@ -1,3 +1,8 @@
+// This is a memory based buffer for simple key/value pairs where the
+// pair will be removed after a specific time-to-live value. You can
+// put a value in the buffer and read it before the TTL is reached.
+// After this time the value is removed and every read operation will
+// return nil.
 package timebuffer
 
 import "time"
@@ -28,6 +33,7 @@ func init() {
 	go handle(requests, responses)
 }
 
+// Puts a value at 'key' with a time-to-live of ttl in seconds.
 func Put(key string, val interface{}, ttl int) {
 	r := rq{key, val}
 	requests <- r
@@ -41,6 +47,8 @@ func Put(key string, val interface{}, ttl int) {
 	}
 }
 
+// Read the value at 'key'. It the TTL of the Put-operation is
+// reached, this function returns nil.
 func Get(key string) interface{} {
 	r := rsp{key: key}
 	r.val = make(chan interface{})
