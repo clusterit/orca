@@ -8,6 +8,7 @@ import (
 	"code.google.com/p/rsc/qr"
 
 	"github.com/clusterit/orca/auth"
+	"github.com/clusterit/orca/common"
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/rest"
 	"gopkg.in/emicklei/go-restful.v1"
@@ -170,6 +171,16 @@ func (t *UsersService) createUser(me *User, request *restful.Request, response *
 		return
 	}
 	network := request.PathParameter("network")
+	if network == common.OrcaPrefix {
+		// we have an internal ID, do update
+		usr, e := t.Provider.Get(u.Id)
+		if e != nil {
+			rest.HandleError(e, response)
+			return
+		}
+		u.Id = usr.Id
+		network = ""
+	}
 	res, err := t.Provider.Create(network, u.Id, u.Name, u.Roles)
 	if err != nil {
 		rest.HandleError(err, response)

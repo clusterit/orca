@@ -139,7 +139,7 @@ func newUsers() Users {
 		return res, nil
 	}
 	userimpl.create = func(nt, id, nam string, r Roles) (*User, error) {
-		return &User{Id: id + "-added", Name: nam, Roles: r}, nil
+		return &User{Id: id + "-added@" + nt, Name: nam, Roles: r}, nil
 	}
 	userimpl.addalias = func(id, netw, alias string) (*User, error) {
 		u := usermap[id]
@@ -272,7 +272,35 @@ func TestUserServices(t *testing.T) {
 			var resuser User
 			err = json.NewDecoder(res.Body).Decode(&resuser)
 			So(err, ShouldBeNil)
-			So(resuser.Id, ShouldEqual, toCreate.Id+"-added")
+			So(resuser.Id, ShouldEqual, toCreate.Id+"-added@mysocialnet")
+			So(resuser.Name, ShouldEqual, toCreate.Name)
+			So(resuser.Roles, ShouldResemble, toCreate.Roles)
+		})
+		Convey("update an unknown user ", func() {
+			toCreate := User{Id: "newid", Name: "newname", Roles: UserRoles}
+			res, err := createRequest(ts, "PUT", "/api/users/orca", "adminid", toCreate)
+			So(err, ShouldBeNil)
+			var resuser User
+			err = json.NewDecoder(res.Body).Decode(&resuser)
+			So(err, ShouldBeNil)
+			// when the namespace is "orca" it will be removed from the service-layer
+			// first the service queries for the userid, because it must be an update
+			// in this case, we do not have this id in our testdata!
+			So(resuser.Id, ShouldEqual, "-added@")
+			So(resuser.Name, ShouldEqual, toCreate.Name)
+			So(resuser.Roles, ShouldResemble, toCreate.Roles)
+		})
+		Convey("update a known user ", func() {
+			toCreate := User{Id: "myid", Name: "newname", Roles: UserRoles}
+			res, err := createRequest(ts, "PUT", "/api/users/orca", "adminid", toCreate)
+			So(err, ShouldBeNil)
+			var resuser User
+			err = json.NewDecoder(res.Body).Decode(&resuser)
+			So(err, ShouldBeNil)
+			// when the namespace is "orca" it will be removed from the service-layer
+			// first the service queries for the userid, because it must be an update
+			// in this case, we do not have this id in our testdata!
+			So(resuser.Id, ShouldEqual, "myid-added@")
 			So(resuser.Name, ShouldEqual, toCreate.Name)
 			So(resuser.Roles, ShouldResemble, toCreate.Roles)
 		})
