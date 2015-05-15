@@ -1,6 +1,5 @@
 ![Orca](doc/img/orca_sm.png)
 
-# Orca!
 `orca`is a SSH gateway comparable to a reverse HTTP proxy. You 
 can use `orca` to enable your employees to connect to internal servers without 
 the need to build a VPN. Simply put `orca` in front of your servers and you can 
@@ -212,6 +211,16 @@ can overwrite this value with an upper limit! The default value in the gateway
 is 0, so it doesn't matter what the user set; a zero value in the gateway simply
 disables 2FA caching.
 
+  Please note that the TOTP is only used for the SSH gateway; it is not used for
+  the Web-UI! If you want to use Two Factor Authentication for the frontend too,
+  you have to enable it with the account provider (google, github, ...). So if 
+  anyone steals your oauth-credentials, the attacker can login, upload public
+  keys and create a new TOTP secret! 
+  
+  If you decide to use the web frontend in the internet your users should be
+  aware of this. Otherwise you should think about using the frontend only in
+  the intranet.
+  
 ## Oauth Providers
 
 To register new OAuth providers, you can use predefined ones (`google`, `github`)
