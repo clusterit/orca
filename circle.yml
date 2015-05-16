@@ -1,6 +1,0 @@
-dependencies:
-  pre:
-    - make depends
-test:
-  override:
-    - make
