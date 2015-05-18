@@ -155,6 +155,7 @@ func keyAuth(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error)
 		Log(logging.Debug, "remote: %s: cannot fetch key for user '%s': %s", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
 	}
+	Log(logging.Info, "remote user identified: %+v", usr)
 	if err := checkAllowed(conn.SessionID(), usr); err != nil {
 		Log(logging.Debug, "remote: %s: not allowed to login for user '%s': %s", conn.RemoteAddr().String(), conn.User(), err)
 		return nil, err
@@ -175,6 +176,7 @@ func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, erro
 	if ttl > configuration.MaxAutologin2FA {
 		ttl = configuration.MaxAutologin2FA
 	}
+	Log(logging.Info, "check password token for '%s', TTL: %d", usr.Id, ttl)
 	err := fetcher.CheckToken(usr.Id, string(password), ttl)
 	if err != nil {
 		Log(logging.Debug, "remote: %s: wrong token for user '%s': '%s'", conn.RemoteAddr().String(), conn.User(), err)
@@ -196,6 +198,11 @@ func main() {
 	}
 	Log(logging.Info, "gateway listens on %#v ...", socket.Addr().String())
 	for {
+		defer func() {
+			if r := recover(); r != nil {
+				Log(logging.Error, "panic while serving: %#v", r)
+			}
+		}()
 
 		tcpConn, err := socket.Accept()
 		if err != nil {
@@ -203,6 +210,7 @@ func main() {
 			continue
 		}
 
+		Log(logging.Info, "new connection from %s, Config: %#v", tcpConn.RemoteAddr().String(), sshConfig)
 		_, err = NewSession(ssh.NewServerConn(tcpConn, &sshConfig))
 
 		if err != nil {
