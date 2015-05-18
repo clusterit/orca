@@ -1,4 +1,4 @@
-<img align="right" src="https://app.wercker.com/status/8d77b125e72fc52b4b8e48e10a64421f/m" alt="wercker status">
+<a href="https://app.wercker.com/project/bykey/8d77b125e72fc52b4b8e48e10a64421f"><img align="right" alt="Wercker status" src="https://app.wercker.com/status/8d77b125e72fc52b4b8e48e10a64421f/m"></a>
 
 ![Orca](doc/img/orca_sm.png)
 
