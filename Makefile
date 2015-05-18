@@ -1,11 +1,11 @@
 SHA := $(shell git rev-parse HEAD)
 OUTROOT := packaging
 
-all: build
+all: complete
 
 complete: build embed
 
-build: gateway orcaman orcacli embed
+build: gateway orcaman orcacli
 
 gateway:
 	go build -o $(OUTROOT)/sshgw -ldflags "-X main.revision $(SHA)" github.com/clusterit/orca/cmd/gateway
