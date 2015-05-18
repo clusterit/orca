@@ -1,3 +1,5 @@
+<img align="right" src="https://app.wercker.com/status/8d77b125e72fc52b4b8e48e10a64421f/m" alt="wercker status">
+
 ![Orca](doc/img/orca_sm.png)
 
 `orca`is a SSH gateway comparable to a reverse HTTP proxy. You 
