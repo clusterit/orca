@@ -4,4 +4,6 @@ build:
     - script:
         name: fetch dependencies
         code: |
-          make depends
+          mkdir -p $GOPATH/src/github.com/clusterit
+          mv ../orca $GOPATH/src/github.com/clusterit
+          cd $GOPATH/src/github.com/clusterit/orca && make depends
