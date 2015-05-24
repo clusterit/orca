@@ -216,13 +216,21 @@ func main() {
 			Log(logging.Error, "failed to accept incoming connection (%s)", err)
 			continue
 		}
-		// set deadline to 5 minutes
-		tcpConn.SetDeadline(time.Now().Add(5 * time.Minute))
+		// set deadline to 10secs
+		tcpConn.SetReadDeadline(time.Now().Add(10 * time.Second))
 		Log(logging.Info, "new connection from %s, Config: %#v", tcpConn.RemoteAddr().String(), sshConfig)
-		_, err = NewSession(ssh.NewServerConn(tcpConn, &sshConfig))
+		sshConn, chans, reqs, err := ssh.NewServerConn(tcpConn, &sshConfig)
+		if err != nil {
+			Log(logging.Error, "failed to ssh connect (%s)", err)
+			tcpConn.Close()
+			continue
+		}
+		// hardcode: if more than 60secs of inactivity, kill connection!
+		_, err = NewSession(tcpConn, 60, sshConn, chans, reqs)
 
 		if err != nil {
 			Log(logging.Error, "failed to handshake (%s)", err)
+			tcpConn.Close()
 			continue
 		}
 

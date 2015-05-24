@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/clusterit/orca/config"
 	"github.com/clusterit/orca/logging"
@@ -15,7 +16,25 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
+type timeoutConn struct {
+	io.ReadWriter
+	conn        net.Conn
+	timeoutSecs int
+}
+
+func (t *timeoutConn) Read(b []byte) (n int, err error) {
+	t.conn.SetDeadline(time.Now().Add(time.Duration(t.timeoutSecs) * time.Second))
+	return t.ReadWriter.Read(b)
+}
+
+func (t *timeoutConn) Write(b []byte) (n int, err error) {
+	t.conn.SetDeadline(time.Now().Add(time.Duration(t.timeoutSecs) * time.Second))
+	return t.ReadWriter.Write(b)
+}
+
 type clientSession struct {
+	tcpConnection     net.Conn
+	timeout           int
 	serverConn        *ssh.ServerConn
 	agent             agent.Agent
 	remoteUser        string
@@ -105,12 +124,11 @@ func (c *backendClient) close() error {
 	return c.client.Close()
 }
 
-func NewSession(sshConn *ssh.ServerConn, chans <-chan ssh.NewChannel, reqs <-chan *ssh.Request, err error) (*clientSession, error) {
-	if err != nil {
-		return nil, err
-	}
-
+func NewSession(tcpconn net.Conn, timeout int, sshConn *ssh.ServerConn, chans <-chan ssh.NewChannel, reqs <-chan *ssh.Request) (*clientSession, error) {
 	var cs clientSession
+	var err error
+	cs.tcpConnection = tcpconn
+	cs.timeout = timeout
 	cs.serverConn = sshConn
 	cs.remotePort = 22
 	cs.remoteUser, cs.remoteHost, err = split(sshConn.User())
@@ -135,12 +153,27 @@ func NewSession(sshConn *ssh.ServerConn, chans <-chan ssh.NewChannel, reqs <-cha
 	}()
 	//go ssh.DiscardRequests(reqs)
 	go cs.handleChannels(sshConn, chans)
-
+	go func() {
+		sshConn.Wait()
+		cs.backend.close()
+	}()
 	return &cs, nil
 }
 
+func (c *clientSession) wrap(wrc io.ReadWriter) *timeoutConn {
+	return &timeoutConn{ReadWriter: wrc, conn: c.tcpConnection, timeoutSecs: c.timeout}
+}
+
+func (c *clientSession) incRT() {
+	c.tcpConnection.SetReadDeadline(time.Now().Add(time.Duration(c.timeout) * time.Second))
+}
+
+func (c *clientSession) incWT() {
+	c.tcpConnection.SetWriteDeadline(time.Now().Add(time.Duration(c.timeout) * time.Second))
+}
 func (cs *clientSession) handleChannels(con ssh.Conn, chans <-chan ssh.NewChannel) {
 	for newChannel := range chans {
+		cs.incRT()
 		if newChannel.ChannelType() == "session" {
 			channel, requests, err := newChannel.Accept()
 			if err != nil {
@@ -174,6 +207,7 @@ func (cs *clientSession) handleChannel(con ssh.Conn, channel ssh.Channel, reqs <
 		}
 	}()
 	for req := range reqs {
+		cs.incRT()
 		cs.tracef("channel request: %s", req.Type)
 		if strings.HasPrefix(req.Type, "auth-agent-req") {
 			subs := string([]byte(req.Type)[len("auth-agent-req"):])
@@ -288,9 +322,11 @@ func (cs *clientSession) connectRemote(backend string, channel ssh.Channel, cmd 
 		cs.errorf("connect to stdin: %s", e)
 		return
 	}
-	go io.Copy(channel, stdoutP)
-	go io.Copy(channel.Stderr(), stderrP)
-	go io.Copy(stdinP, channel)
+	wc := cs.wrap(channel)
+	wce := cs.wrap(channel.Stderr())
+	go io.Copy(wc, stdoutP)
+	go io.Copy(wce, stderrP)
+	go io.Copy(stdinP, wc)
 	if cmd != nil {
 		cs.debugf("start remote command %s", *cmd)
 		e = sess.Start(*cmd)
@@ -326,6 +362,7 @@ func (cs *clientSession) connectRemote(backend string, channel ssh.Channel, cmd 
 
 func (cs *clientSession) handleBackendChannel(tp string, nch <-chan ssh.NewChannel) error {
 	for ch := range nch {
+		cs.incRT()
 		c, rqs, err := ch.Accept()
 		cs.tracef("new backendchannel '%s'", tp)
 		if err != nil {
@@ -338,8 +375,9 @@ func (cs *clientSession) handleBackendChannel(tp string, nch <-chan ssh.NewChann
 		}
 		go func() {
 			go ssh.DiscardRequests(crqs)
-			go io.Copy(c, clientChannel)
-			io.Copy(clientChannel, c)
+			ch := cs.wrap(clientChannel)
+			go io.Copy(c, ch)
+			io.Copy(ch, c)
 			clientChannel.Close()
 			c.Close()
 		}()
@@ -390,8 +428,9 @@ func (cs *clientSession) tunnelChannel(ch ssh.Channel, tp string, data []byte) e
 	}
 	go ssh.DiscardRequests(rqs)
 	go func() {
-		go io.Copy(ch1, ch)
-		io.Copy(ch, ch1)
+		wch := cs.wrap(ch)
+		go io.Copy(ch1, wch)
+		io.Copy(wch, ch1)
 		ch.Close()
 		ch1.Close()
 	}()
