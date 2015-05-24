@@ -23,6 +23,9 @@ import (
 	"github.com/spf13/viper"
 
 	"golang.org/x/crypto/ssh"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 const (
@@ -188,6 +191,10 @@ func pwdCallback(conn ssh.ConnMetadata, password []byte) (*ssh.Permissions, erro
 }
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	initGateway()
 	initWithSettings(zone)
 
@@ -209,7 +216,8 @@ func main() {
 			Log(logging.Error, "failed to accept incoming connection (%s)", err)
 			continue
 		}
-
+		// set deadline to 5 minutes
+		tcpConn.SetDeadline(time.Now().Add(5 * time.Minute))
 		Log(logging.Info, "new connection from %s, Config: %#v", tcpConn.RemoteAddr().String(), sshConfig)
 		_, err = NewSession(ssh.NewServerConn(tcpConn, &sshConfig))
 
