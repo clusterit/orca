@@ -216,8 +216,8 @@ func main() {
 			Log(logging.Error, "failed to accept incoming connection (%s)", err)
 			continue
 		}
-		// set deadline to 10secs
-		tcpConn.SetReadDeadline(time.Now().Add(10 * time.Second))
+		// set deadline to 60secs
+		tcpConn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		Log(logging.Info, "new connection from %s, Config: %#v", tcpConn.RemoteAddr().String(), sshConfig)
 		sshConn, chans, reqs, err := ssh.NewServerConn(tcpConn, &sshConfig)
 		if err != nil {
