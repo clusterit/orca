@@ -120,7 +120,9 @@ func (c *backendClient) newSession() error {
 }
 
 func (c *backendClient) close() error {
-	c.session.Close()
+	if c.session != nil {
+		c.session.Close()
+	}
 	return c.client.Close()
 }
 

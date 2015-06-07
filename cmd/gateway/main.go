@@ -225,8 +225,8 @@ func main() {
 			tcpConn.Close()
 			continue
 		}
-		// hardcode: if more than 60secs of inactivity, kill connection!
-		_, err = NewSession(tcpConn, 60, sshConn, chans, reqs)
+		// hardcode: if more than 10min of inactivity, kill connection!
+		_, err = NewSession(tcpConn, 600, sshConn, chans, reqs)
 
 		if err != nil {
 			Log(logging.Error, "failed to handshake (%s)", err)
