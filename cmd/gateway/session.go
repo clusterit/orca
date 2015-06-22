@@ -157,7 +157,11 @@ func NewSession(tcpconn net.Conn, timeout int, sshConn *ssh.ServerConn, chans <-
 	go cs.handleChannels(sshConn, chans)
 	go func() {
 		sshConn.Wait()
-		cs.backend.close()
+		if cs.backend != nil {
+			// backend can be nil if a connection could not be established
+			// because there is no agent on client
+			cs.backend.close()
+		}
 	}()
 	return &cs, nil
 }
