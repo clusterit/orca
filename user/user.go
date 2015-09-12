@@ -24,17 +24,19 @@ type (
 
 	// A User can login via the SSH gateway or via the webapp
 	User struct {
-		ID                string     `json:"id"`
-		Name              string     `json:"name"`
-		Keys              []Key      `json:"keys"`
-		Roles             Roles      `json:"roles"`
-		Aliases           []string   `json:"aliases"`
-		Use2FA            bool       `json:"use2fa"`
-		AutologinAfter2FA int        `json:"autologinafter2FA"`
-		Allowance         *Allowance `json:"allowance,omitempty"`
-		IDToken           string     `json:"idtoken"`
+		ID      string   `json:"id"`
+		Name    string   `json:"name"`
+		Keys    []Key    `json:"keys"`
+		Roles   Roles    `json:"roles"`
+		Aliases []string `json:"aliases"`
 	}
 
+	// TwoFactor stores some values needed for 2FA for a specific user.
+	TwoFactor struct {
+		UserID        string `json:"userid"`
+		IDToken       string `json:"idtoken"`
+		AutologinSecs int    `json:"autologinsecs"`
+	}
 	// A Key is a public part of a key pair
 	Key struct {
 		ID          string `json:"id"`
