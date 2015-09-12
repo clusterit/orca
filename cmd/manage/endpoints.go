@@ -7,5 +7,5 @@ import (
 )
 
 func webRegisterUrlMapping(mux *http.ServeMux) {
-	mux.Handle("/", http.FileServer(rice.MustFindBox("app").HTTPBox()))
+	mux.Handle("/", http.FileServer(rice.MustFindBox("app/public").HTTPBox()))
 }
