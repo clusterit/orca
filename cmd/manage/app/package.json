@@ -4,7 +4,7 @@
   "description": "orca web endpoints",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "./node_modules/.bin/webpack -w"
   },
   "author": "Ulrich Schreiner",
   "devDependencies": {
@@ -17,14 +17,13 @@
     "style-loader": "^0.12.3",
     "url-loader": "^0.5.6",
     "webpack": "^1.12.1",
-    "webpack-dev-server": "^1.10.1"
+    "webpack-dev-server": "^1.10.1",
+    "react-tools": "^0.13.3"
   },
   "dependencies": {
-    "react": "^0.14.0-rc1",
-    "react-dom": "^0.14.0-rc1"
-  },
-  "scripts": {
-    "devserver":
-      "./node_modules/.bin/webpack-dev-server --progress --colors --hot --content-base public"
+    "material-ui": "^0.11.0",
+    "react": "^0.13.3",
+    "react-router": "^0.13.3",
+    "react-tap-event-plugin": "^0.1.7"
   }
 }

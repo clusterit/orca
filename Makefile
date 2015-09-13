@@ -13,3 +13,6 @@ deps:
 
 depsupdate:
 	go get -u $(DEPENDENCIES)
+
+webuibuilder:
+	cd cmd/manage/app && npm run build

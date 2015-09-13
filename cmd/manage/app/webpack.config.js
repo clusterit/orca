@@ -24,7 +24,7 @@ module.exports = {
 			// JSX/ES6 handling with babel
 			// * babel-loader: uses Babel to transform your JSX/ES6 JavaScript to ECMAScript 5
 			// * react-hot: Reloads your React Component on code changes without loosing the application state
-			{	test: /\.js$/, exclude: /node_modules/, loaders: ['react-hot','babel?optional[]=es7.functionBind'] },
+			{	test: /\.js$/, exclude: /node_modules/, loaders: ['babel?optional[]=es7.functionBind'] },
 			// CSS handling
 			// * style-loader: Embeds referenced CSS code using a <style>-element in your index.html file
 			// * css-loader: Parses the actual CSS files referenced from your code. Modifies url()-statements in your
@@ -43,11 +43,9 @@ module.exports = {
 		]
 	},
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
   ],
 	stats: {
-
 		// Nice colored output
 		colors: true
 	},
