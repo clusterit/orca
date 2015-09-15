@@ -3,6 +3,7 @@
 import React from 'react';
 import mui from 'material-ui';
 import { RouteHandler } from 'react-router';
+import Login from './components/Login';
 
 let ThemeManager = new mui.Styles.ThemeManager();
 let AppBar = mui.AppBar
@@ -23,6 +24,10 @@ export default class OrcaApp extends React.Component {
     this.getSelectedIndex = ::this.getSelectedIndex;
     this.onLeftNavChange = ::this.onLeftNavChange;
 	}
+
+  componentDidMount() {
+    console.log("orcaapp mount:",authkit.providers());
+  }
 
   getChildContext() {
     return {
@@ -52,22 +57,29 @@ export default class OrcaApp extends React.Component {
   }
 
 	render() {
-		return (
-      <div id="page_container">
-        <LeftNav
-            ref="leftNav"
-            docked={false}
-            menuItems={menuItems}
-            selectedIndex={this.getSelectedIndex()}
-            onChange={this.onLeftNavChange} />
-        <header>
-           <AppBar title='Orca' onLeftIconButtonTouchTap={this.handleClick} />
-        </header>
-        <section className="content">
-          <RouteHandler />
-        </section>
-      </div>
-		);
+    if (true) {
+      return (
+        <Login></Login>
+      )
+    }
+    else {
+  		return (
+        <div id="page_container">
+          <LeftNav
+              ref="leftNav"
+              docked={false}
+              menuItems={menuItems}
+              selectedIndex={this.getSelectedIndex()}
+              onChange={this.onLeftNavChange} />
+          <header>
+             <AppBar title='Orca' onLeftIconButtonTouchTap={this.handleClick} />
+          </header>
+          <section className="content">
+            <RouteHandler />
+          </section>
+        </div>
+  		);
+    }
 	}
 }
 
