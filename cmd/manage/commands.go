@@ -43,7 +43,7 @@ func start(listenAddress string) error {
 		Addr:    listenAddress,
 		Handler: mux,
 	}
-	webRegisterUrlMapping(mux)
+	webRegisterURLMapping(mux)
 	log.Infof("start listening on %s", srv.Addr)
 	// todo: add TLS
 	return srv.ListenAndServe()

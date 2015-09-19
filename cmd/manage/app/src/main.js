@@ -3,6 +3,8 @@ import React from 'react';
 import mui from 'material-ui';
 import injectTapEventPlugin from 'react-tap-event-plugin';
 import Router, { Route, DefaultRoute, NotFoundRoute, Redirect, Link } from 'react-router';
+import 'flexboxgrid/dist/flexboxgrid.css';
+
 
 injectTapEventPlugin();
 

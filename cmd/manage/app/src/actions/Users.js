@@ -1,7 +1,5 @@
 import Reflux from 'reflux';
 
-var UserActions = Reflux.createActions([
+module.exports = Reflux.createActions([
   'login'
 ]);
-
-module.exports = UserActions;

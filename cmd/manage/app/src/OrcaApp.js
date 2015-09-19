@@ -4,11 +4,13 @@ import React from 'react';
 import mui from 'material-ui';
 import { RouteHandler } from 'react-router';
 import Login from './components/Login';
+import UserStore from './stores/Users';
 
 let ThemeManager = new mui.Styles.ThemeManager();
 let AppBar = mui.AppBar
   , LeftNav = mui.LeftNav
   , MenuItem = mui.MenuItem
+  , Avatar = mui.Avatar
   , RaisedButton = mui.RaisedButton;
 
 let menuItems = [
@@ -23,10 +25,20 @@ export default class OrcaApp extends React.Component {
     this.handleClick = ::this.handleClick;
     this.getSelectedIndex = ::this.getSelectedIndex;
     this.onLeftNavChange = ::this.onLeftNavChange;
+    this.state = {
+      user : null
+    };
 	}
 
   componentDidMount() {
-    console.log("orcaapp mount:",authkit.providers());
+    this.unsubscribe = UserStore.listen(::this.onLogin);
+  }
+  componentWillUnmount () {
+    this.unsubscribe();
+  }
+  onLogin (u) {
+    this.setState ({user:u});
+    console.log("handle login:",u);
   }
 
   getChildContext() {
@@ -57,12 +69,16 @@ export default class OrcaApp extends React.Component {
   }
 
 	render() {
-    if (true) {
+    if (!this.state.user) {
       return (
         <Login></Login>
       )
     }
     else {
+      var avatarStyles = {marginLeft:'10px', marginTop:'10px'};
+      let header = (
+        <Avatar style={avatarStyles} src={this.state.user.thumbnail} />
+      );
   		return (
         <div id="page_container">
           <LeftNav
@@ -70,7 +86,8 @@ export default class OrcaApp extends React.Component {
               docked={false}
               menuItems={menuItems}
               selectedIndex={this.getSelectedIndex()}
-              onChange={this.onLeftNavChange} />
+              onChange={this.onLeftNavChange}
+              header={header} />
           <header>
              <AppBar title='Orca' onLeftIconButtonTouchTap={this.handleClick} />
           </header>

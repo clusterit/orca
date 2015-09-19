@@ -6,7 +6,8 @@ import (
 	"github.com/GeertJohan/go.rice"
 )
 
-func webRegisterUrlMapping(mux *http.ServeMux) {
+func webRegisterURLMapping(mux *http.ServeMux) {
 	mux.HandleFunc("/authed/", kit.Handle(authed))
+	registerOAuth(mux)
 	mux.Handle("/", http.FileServer(rice.MustFindBox("app/public").HTTPBox()))
 }
