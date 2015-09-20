@@ -43,10 +43,10 @@ func Init(machines []string) (*Cluster, error) {
 // InitTLS creates the cluster with TLS and client cert
 func InitTLS(machines []string, key, cert, cacert string) (*Cluster, error) {
 	if cert == "" && key == "" && cacert == "" {
-		log.Info("connect to etcd without TLS: %s", machines)
+		log.Infof("connect to etcd without TLS: %s", machines)
 		return Init(machines)
 	}
-	log.Info("connect to etcd with TLS: %s", machines)
+	log.Infof("connect to etcd with TLS: %s", machines)
 	client, err := etcd.NewTLSClient(machines, cert, key, cacert)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to ETCD via TLS: %s", err)

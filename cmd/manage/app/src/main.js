@@ -10,13 +10,13 @@ injectTapEventPlugin();
 
 // Our application
 import OrcaApp from './OrcaApp';
-import Home from './components/Home';
+import Account from './components/Account';
 import About from './components/About';
 import Contact from './components/Contact';
 
 const AppRoutes = (
   <Route path="/" handler={OrcaApp}>
-    <DefaultRoute handler={Home} />
+    <DefaultRoute handler={Account} />
     <Route name="about" handler={About} />
     <Route name="contact" handler={Contact} />
   </Route>

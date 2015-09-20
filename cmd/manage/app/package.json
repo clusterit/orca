@@ -25,6 +25,7 @@
     "react": "^0.13.3",
     "react-router": "^0.13.3",
     "react-tap-event-plugin": "^0.1.7",
-    "reflux": "^0.2.12"
+    "reflux": "^0.2.12",
+    "superagent": "^1.4.0"
   }
 }

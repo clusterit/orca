@@ -14,7 +14,7 @@ let AppBar = mui.AppBar
   , RaisedButton = mui.RaisedButton;
 
 let menuItems = [
-    { route: '/', text: 'Home' },
+    { route: '/', text: 'Account' },
     { route: 'about', text: 'About' },
     { route: 'contact', text: 'Contact' },
 ];

@@ -120,6 +120,11 @@ func (eu *etcdUsers) Create(network, alias, name string, rlz user.Roles) (*user.
 	return u, eu.up.Put(u.ID, u)
 }
 
+func (eu *etcdUsers) Find(network, alias string) (*user.User, error) {
+	usrid := uid(network, alias)
+	return eu.Get(usrid)
+}
+
 func (eu *etcdUsers) GetAll() ([]user.User, error) {
 	var res []user.User
 	return res, eu.up.GetAll(true, false, &res)

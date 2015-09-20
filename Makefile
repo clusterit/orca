@@ -1,6 +1,7 @@
 DEPENDENCIES = \
 	github.com/coreos/go-etcd/etcd \
   github.com/spf13/cobra \
+	github.com/spf13/viper \
 	github.com/Sirupsen/logrus \
 	gopkg.in/errgo.v1 \
 	github.com/satori/go.uuid \

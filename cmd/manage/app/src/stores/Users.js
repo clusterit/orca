@@ -1,8 +1,11 @@
 import Reflux from 'reflux';
 import UserActions from '../actions/Users';
 
+var request = require('superagent');
+
 var UserStore = Reflux.createStore({
   currentUser : null,
+  currentNetwork : null,
 
   init: function() {
     this.listenTo(UserActions.login, 'onLogin');
@@ -13,9 +16,16 @@ var UserStore = Reflux.createStore({
     authkit.login(p.network).user(function (usr, tok) {
       console.log("logged in:",usr);
       self.currentUser = usr;
+      self.currentNetwork = p.network;
+      request.
+        get("/api/v1/users/"+p.network+"/"+usr.email).
+        set('Accept', 'application/json').
+        end(function(err, res){
+        console.log("find user:",err, res)
+      });
       self.trigger(usr);
     });
-  }
+  },
 });
 
 module.exports = UserStore;
