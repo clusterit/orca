@@ -3,15 +3,11 @@ package main
 import (
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/clusterit/orca/cmd/manage/endpoints"
-	"github.com/clusterit/orca/etcd"
-	"github.com/clusterit/orca/user/backend/etcdstore"
 	"github.com/emicklei/go-restful"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/ulrichSchreiner/authkit"
 )
 
@@ -26,28 +22,8 @@ func registerOAuth(mux *http.ServeMux) {
 }
 
 func createServiceContainer(pt string) (*restful.Container, error) {
-	if etcds == "" {
-		etcds = viper.GetString("etcd_machines")
-	}
-	if etcdKey == "" {
-		etcdKey = viper.GetString("etcd_key")
-	}
-	if etcdCert == "" {
-		etcdCert = viper.GetString("etcd_cert")
-	}
-	if etcdCa == "" {
-		etcdCa = viper.GetString("etcd_ca")
-	}
-	cc, err := etcd.InitTLS(strings.Split(etcds, ","), etcdKey, etcdCert, etcdCa)
-	if err != nil {
-		return nil, err
-	}
-	backend, err := etcdstore.New(cc)
-	if err != nil {
-		return nil, err
-	}
 	cnt := restful.NewContainer()
-	restservice := endpoints.NewUserService(kit, backend, pt)
+	restservice := endpoints.NewUserService(kit, mustServiceBackend(), pt)
 	cnt.Add(restservice)
 	return cnt, nil
 

@@ -13,7 +13,7 @@ const (
 	// UserRole defines a normal user
 	UserRole Role = "USER"
 	// ManagerRole is a manager
-	ManagerRole = "MANAGER"
+	ManagerRole Role = "MANAGER"
 )
 
 type (

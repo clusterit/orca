@@ -20,9 +20,10 @@ var UserStore = Reflux.createStore({
       request.
         get("/api/v1/users/"+p.network+"/"+usr.email).
         set('Accept', 'application/json').
-        end(function(err, res){
-        console.log("find user:",err, res)
-      });
+        end(function(err, res) {
+          if (!err)
+            console.log("find user:",res.body)
+        });
       self.trigger(usr);
     });
   },

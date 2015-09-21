@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/clusterit/orca/user"
 	"github.com/spf13/cobra"
 )
 
@@ -17,15 +19,47 @@ var (
 	etcdCa   string
 )
 
-var serve = &cobra.Command{
-	Use:   "serve",
-	Short: "Start the web listener for the endpoint an web UI",
-	Long:  "Starts the web listener on the address specified by the options. Note that this is not the same as the publish address.",
-	Run: func(cmd *cobra.Command, args []string) {
-		listenaddress := fmt.Sprintf("%s:%d", bind, port)
-		log.Error(start(listenaddress))
-	},
+func checkAndFail(condition bool, msg string, par ...interface{}) {
+	if !condition {
+		fmt.Printf(msg+"\n", par...)
+		os.Exit(1)
+	}
 }
+
+func checkErrorAndFail(e error, par ...interface{}) {
+	if e != nil {
+		fmt.Printf(e.Error()+"\n", par...)
+		os.Exit(1)
+	}
+}
+
+var (
+	serve = &cobra.Command{
+		Use:   "serve",
+		Short: "Start the web listener for the endpoint an web UI",
+		Long:  "Starts the web listener on the address specified by the options. Note that this is not the same as the publish address.",
+		Run: func(cmd *cobra.Command, args []string) {
+			listenaddress := fmt.Sprintf("%s:%d", bind, port)
+			log.Error(start(listenaddress))
+		},
+	}
+
+	userCommand = &cobra.Command{Use: "user"}
+	useradd     = &cobra.Command{
+		Use:   "add [#userid] [#network] [#fullname]",
+		Short: "Add a new user to the backend",
+		Long:  "Add a new user to the backend. The user must have an alias and a network, aka 'user@gmail.com@google'.",
+		Run: func(cmd *cobra.Command, args []string) {
+			checkAndFail(len(args) > 2, "you must specify a userid, a network and a fullname")
+			uid := args[0]
+			netw := args[1]
+			name := args[2]
+			backend := mustServiceBackend()
+			_, e := backend.Create(netw, uid, name, user.ManagerRole)
+			checkErrorAndFail(e)
+		},
+	}
+)
 
 func init() {
 	serve.Flags().StringVarP(&bind, "bind", "b", "127.0.0.1", "bind address for the endpoint")

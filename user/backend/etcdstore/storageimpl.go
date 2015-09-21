@@ -98,7 +98,7 @@ func (eu *etcdUsers) AddAlias(id, network, alias string) (*user.User, error) {
 	return u, eu.up.Put(u.ID, u)
 }
 
-func (eu *etcdUsers) Create(network, alias, name string, rlz user.Roles) (*user.User, error) {
+func (eu *etcdUsers) Create(network, alias, name string, rlz ...user.Role) (*user.User, error) {
 	usrid := uid(network, alias)
 	u, e := eu.Get(usrid)
 	if e != nil {

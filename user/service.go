@@ -6,7 +6,7 @@ type (
 		// Create a new user alias@network with the given name and roles. The
 		// returned user will have a unique ID which will be uses later in every
 		// other function
-		Create(network, alias, name string, rolzs Roles) (*User, error)
+		Create(network, alias, name string, rolzs ...Role) (*User, error)
 		// Find searches for a user with an alias 'alias@network' and returns it.
 		Find(network, alias string) (*User, error)
 		// Update the user values from the user with the given internal UID. Returns
